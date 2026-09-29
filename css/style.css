@@ -805,3 +805,55 @@ label {
     font-size: 9px;
   }
 }
+
+
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.login-screen.hidden {
+  display: none;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.login-logo {
+  margin-bottom: 16px;
+}
+
+.login-card h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  letter-spacing: -.04em;
+}
+
+.login-copy {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.login-error {
+  min-height: 18px;
+  color: #b24d4d;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+body.auth-pending .app-shell {
+  visibility: hidden;
+}

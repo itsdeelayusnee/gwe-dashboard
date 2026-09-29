@@ -1,61 +1,108 @@
 const Storage = (() => {
-  const KEY = "gwe_v1_data";
+  const cfg = window.APP_CONFIG;
+  const client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
 
-  const seed = {
+  let data = {
     people: [],
     followups: [],
     activities: []
   };
 
-  function load() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : structuredClone(seed);
-    } catch {
-      return structuredClone(seed);
+  async function getSession() {
+    const { data: sessionData, error } = await client.auth.getSession();
+    if (error) throw error;
+    return sessionData.session;
+  }
+
+  async function signIn(email, password) {
+    const { data: authData, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return authData;
+  }
+
+  async function signOut() {
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
+  }
+
+  async function currentUserId() {
+    const session = await getSession();
+    return session?.user?.id || null;
+  }
+
+  async function loadAll() {
+    const uid = await currentUserId();
+    if (!uid) {
+      data = { people: [], followups: [], activities: [] };
+      return data;
     }
-  }
 
-  let data = load();
+    const [peopleRes, followupsRes, activitiesRes] = await Promise.all([
+      client.from("gwe_people").select("*").order("created_at", { ascending: false }),
+      client.from("gwe_followups").select("*").order("due_date", { ascending: true }),
+      client.from("gwe_activities").select("*").order("activity_date", { ascending: false })
+    ]);
 
-  function save() {
-    localStorage.setItem(KEY, JSON.stringify(data));
-  }
+    if (peopleRes.error) throw peopleRes.error;
+    if (followupsRes.error) throw followupsRes.error;
+    if (activitiesRes.error) throw activitiesRes.error;
 
-  function id() {
-    return crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  }
-
-  function addPerson(person) {
-    const record = {
-      id: id(),
-      name: person.name.trim(),
-      phone: person.phone?.trim() || "",
-      source: person.source,
-      status: "new_enquiry",
-      date_added: new Date().toISOString().slice(0, 10),
-      education_date: null,
-      registration_date: null,
-      started_saving_date: null,
-      notes: person.notes?.trim() || "",
-      created_at: new Date().toISOString()
+    data = {
+      people: peopleRes.data || [],
+      followups: followupsRes.data || [],
+      activities: activitiesRes.data || []
     };
-    data.people.unshift(record);
-    addActivity(record.id, "enquiry_added", "Enquiry added");
-    save();
-    return record;
+    return data;
   }
 
-  function updatePerson(personId, patch) {
-    const person = data.people.find(p => p.id === personId);
-    if (!person) return null;
-    Object.assign(person, patch);
-    save();
-    return person;
+  function getData() {
+    return data;
   }
 
-  function addFollowup(personId, type, dueDate, notes = "") {
-    // Avoid duplicate pending follow-up of same type.
+  async function addPerson(person) {
+    const uid = await currentUserId();
+    if (!uid) throw new Error("Not signed in");
+
+    const payload = {
+      user_id: uid,
+      name: person.name.trim(),
+      phone: person.phone?.trim() || null,
+      source: person.source || null,
+      status: "new_enquiry",
+      date_added: new Date().toISOString().slice(0,10),
+      notes: person.notes?.trim() || null
+    };
+
+    const { data: rows, error } = await client
+      .from("gwe_people")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await addActivity(rows.id, "enquiry_added", "Enquiry added");
+    await loadAll();
+    return rows;
+  }
+
+  async function updatePerson(personId, patch) {
+    const { data: row, error } = await client
+      .from("gwe_people")
+      .update(patch)
+      .eq("id", personId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    await loadAll();
+    return row;
+  }
+
+  async function addFollowup(personId, type, dueDate, notes = "") {
+    const uid = await currentUserId();
+    if (!uid) throw new Error("Not signed in");
+
     const existing = data.followups.find(f =>
       f.person_id === personId &&
       f.followup_type === type &&
@@ -63,71 +110,86 @@ const Storage = (() => {
     );
     if (existing) return existing;
 
-    const followup = {
-      id: id(),
-      person_id: personId,
-      followup_type: type,
-      due_date: dueDate,
-      status: "pending",
-      outcome: "",
-      notes,
-      completed_at: null,
-      created_at: new Date().toISOString()
-    };
-    data.followups.push(followup);
-    save();
-    return followup;
+    const { data: row, error } = await client
+      .from("gwe_followups")
+      .insert({
+        user_id: uid,
+        person_id: personId,
+        followup_type: type,
+        due_date: dueDate,
+        status: "pending",
+        notes: notes || null
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    await loadAll();
+    return row;
   }
 
-  function completeFollowups(personId, type = null) {
-    const now = new Date().toISOString();
-    data.followups.forEach(f => {
-      if (f.person_id === personId && f.status === "pending" && (!type || f.followup_type === type)) {
-        f.status = "completed";
-        f.completed_at = now;
-      }
-    });
-    save();
+  async function completeFollowups(personId, type = null) {
+    let query = client
+      .from("gwe_followups")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString()
+      })
+      .eq("person_id", personId)
+      .eq("status", "pending");
+
+    if (type) query = query.eq("followup_type", type);
+
+    const { error } = await query;
+    if (error) throw error;
+    await loadAll();
   }
 
-  function snoozeFollowup(followupId, days) {
-    const f = data.followups.find(x => x.id === followupId);
-    if (!f) return;
+  async function snoozeFollowup(followupId, days) {
     const d = new Date();
     d.setDate(d.getDate() + days);
-    f.due_date = d.toISOString().slice(0, 10);
-    f.status = "pending";
-    save();
+
+    const { error } = await client
+      .from("gwe_followups")
+      .update({
+        due_date: d.toISOString().slice(0,10),
+        status: "pending"
+      })
+      .eq("id", followupId);
+
+    if (error) throw error;
+    await loadAll();
   }
 
-  function addActivity(personId, type, details = "") {
-    data.activities.unshift({
-      id: id(),
-      person_id: personId,
-      activity_type: type,
-      activity_date: new Date().toISOString(),
-      details
-    });
-    save();
-  }
+  async function addActivity(personId, type, details = "") {
+    const uid = await currentUserId();
+    if (!uid) throw new Error("Not signed in");
 
-  function getData() {
-    return data;
-  }
+    const { error } = await client
+      .from("gwe_activities")
+      .insert({
+        user_id: uid,
+        person_id: personId,
+        activity_type: type,
+        details: details || null
+      });
 
-  function reset() {
-    data = structuredClone(seed);
-    save();
+    if (error) throw error;
+    await loadAll();
   }
 
   return {
+    client,
+    getSession,
+    signIn,
+    signOut,
+    loadAll,
     getData,
     addPerson,
     updatePerson,
     addFollowup,
     completeFollowups,
     snoozeFollowup,
-    addActivity,
-    reset
+    addActivity
   };
 })();

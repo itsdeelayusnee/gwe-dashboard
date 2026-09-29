@@ -21,14 +21,14 @@ const App = (() => {
 
   function formatDate(dateStr) {
     if (!dateStr) return "—";
-    return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-      .format(new Date(`${dateStr}T12:00:00`));
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit", month: "short", year: "numeric"
+    }).format(new Date(`${dateStr}T12:00:00`));
   }
 
   function statusLabel(status) {
     return {
       new_enquiry: "New enquiry",
-      education_completed: "Education completed",
       registration_pending: "Registration pending",
       purchase_pending: "Purchase pending",
       started_saving: "Started saving",
@@ -65,6 +65,19 @@ const App = (() => {
     setTimeout(() => el.classList.remove("show"), 1800);
   }
 
+  function empty(text) {
+    return `<div class="empty-card">${escapeHtml(text)}</div>`;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
   function renderDashboard() {
     const { people, followups, activities } = Storage.getData();
     const started = people.filter(p => p.status === "started_saving").length;
@@ -93,41 +106,45 @@ const App = (() => {
         </div>
         <small>${daysAgoLabel(a.activity_date)}</small>
       </div>`;
-    }).join("") : empty("No activity yet. Add your first enquiry.");
+    }).join("") : empty("No recent activity yet.");
   }
 
   function renderPeople() {
-    const { people } = Storage.getData();
+    const { people, followups } = Storage.getData();
     const term = $("#peopleSearch")?.value?.trim().toLowerCase() || "";
-    let rows = people.filter(p => {
+
+    const rows = people.filter(p => {
       const matchesFilter = activePeopleFilter === "all" || p.status === activePeopleFilter;
-      const matchesSearch = !term || p.name.toLowerCase().includes(term) || (p.source || "").toLowerCase().includes(term);
+      const matchesSearch = !term ||
+        p.name.toLowerCase().includes(term) ||
+        (p.source || "").toLowerCase().includes(term) ||
+        (p.pg_code || "").toLowerCase().includes(term);
       return matchesFilter && matchesSearch;
     });
 
-    $("#peopleList").innerHTML = rows.length ? rows.map(personCard).join("") : empty("No people found.");
-    $$(".person-card").forEach(card => card.addEventListener("click", () => openProfile(card.dataset.id)));
-  }
+    $("#peopleList").innerHTML = rows.length ? rows.map(p => {
+      const next = followups
+        .filter(f => f.person_id === p.id && f.status === "pending")
+        .sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
 
-  function personCard(p) {
-    const { followups } = Storage.getData();
-    const next = followups
-      .filter(f => f.person_id === p.id && f.status === "pending")
-      .sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
-
-    return `<article class="person-card" data-id="${p.id}">
-      <div class="person-top">
-        <div>
-          <div class="person-name">${escapeHtml(p.name)}</div>
-          <div class="person-meta">${escapeHtml(p.source || "Unknown source")}</div>
+      return `<article class="person-card" data-id="${p.id}">
+        <div class="person-top">
+          <div>
+            <div class="person-name">${escapeHtml(p.name)}</div>
+            <div class="person-meta">${escapeHtml(p.pg_code || p.source || "Existing Saver")}</div>
+          </div>
+          <span class="status-pill">${escapeHtml(statusLabel(p.status))}</span>
         </div>
-        <span class="status-pill">${escapeHtml(statusLabel(p.status))}</span>
-      </div>
-      <div class="card-footer">
-        <span>Added ${formatDate(p.date_added)}</span>
-        <span>${next ? `Follow up ${formatDate(next.due_date)}` : "No follow up"}</span>
-      </div>
-    </article>`;
+        <div class="card-footer">
+          <span>Added ${formatDate(p.date_added)}</span>
+          <span>${next ? `Follow up ${formatDate(next.due_date)}` : "No follow up"}</span>
+        </div>
+      </article>`;
+    }).join("") : empty("No people found.");
+
+    $$(".person-card").forEach(card =>
+      card.addEventListener("click", () => openProfile(card.dataset.id))
+    );
   }
 
   function renderFollowups() {
@@ -170,159 +187,49 @@ const App = (() => {
       e.stopPropagation();
       if (btn.dataset.person) openProfile(btn.dataset.person);
     }));
-    $$(".mini-snooze").forEach(btn => btn.addEventListener("click", e => {
+
+    $$(".mini-snooze").forEach(btn => btn.addEventListener("click", async e => {
       e.stopPropagation();
-      Storage.snoozeFollowup(btn.dataset.id, 7);
-      toast("Follow up moved by 7 days");
-      renderAll();
+      try {
+        await Storage.snoozeFollowup(btn.dataset.id, 7);
+        toast("Follow up moved by 7 days");
+        renderAll();
+      } catch (err) {
+        toast(err.message || "Could not snooze follow up");
+      }
     }));
   }
 
   function renderCommunity() {
     const { people } = Storage.getData();
     const term = $("#communitySearch")?.value?.trim().toLowerCase() || "";
-    const rows = people.filter(p => p.status === "started_saving")
-      .filter(p => !term || p.name.toLowerCase().includes(term) || (p.source || "").toLowerCase().includes(term));
+
+    const rows = people
+      .filter(p => p.status === "started_saving")
+      .filter(p => !term ||
+        p.name.toLowerCase().includes(term) ||
+        (p.pg_code || "").toLowerCase().includes(term) ||
+        (p.source || "").toLowerCase().includes(term)
+      );
 
     $("#communityList").innerHTML = rows.length ? rows.map(p => `
       <article class="person-card" data-id="${p.id}">
         <div class="person-top">
           <div>
             <div class="person-name">${escapeHtml(p.name)}</div>
-            <div class="person-meta">${escapeHtml(p.source || "")}</div>
+            <div class="person-meta">${escapeHtml(p.pg_code || p.source || "")}</div>
           </div>
           <span class="status-pill">Started saving</span>
         </div>
         <div class="card-footer">
-          <span>Started ${formatDate(p.started_saving_date)}</span>
-          <span>Mission +1 ✦</span>
+          <span>Registered ${formatDate(p.registration_date || p.date_added)}</span>
+          <span>${p.last_purchase_date ? `Last purchase ${formatDate(p.last_purchase_date)}` : (p.last_purchase_note || "Existing saver")}</span>
         </div>
-      </article>`).join("") : empty("No one has been marked as started saving yet.");
+      </article>`).join("") : empty("No savers found.");
 
-    $$("#communityList .person-card").forEach(card => card.addEventListener("click", () => openProfile(card.dataset.id)));
-  }
-
-  function openProfile(id) {
-    selectedPersonId = id;
-    const { people } = Storage.getData();
-    const p = people.find(x => x.id === id);
-    if (!p) return;
-
-    $("#profileName").textContent = p.name;
-    $("#profileMeta").textContent = `${p.source || "Unknown source"} • Added ${formatDate(p.date_added)}`;
-    $("#profileNotes").textContent = p.notes || "No notes yet.";
-
-    const journey = [
-      ["Enquiry", p.date_added, true],
-      ["Education completed", p.education_date, !!p.education_date],
-      ["Registered", p.registration_date, !!p.registration_date],
-      ["Started saving", p.started_saving_date, !!p.started_saving_date]
-    ];
-
-    $("#profileJourney").innerHTML = journey.map(([label,date,done]) => `
-      <div class="journey-step ${done ? "done" : ""}">
-        <div class="journey-dot">${done ? "✓" : "○"}</div>
-        <div>
-          <strong>${label}</strong>
-          <small>${done ? formatDate(date) : "Pending"}</small>
-        </div>
-      </div>`).join("");
-
-    $("#profileActions").innerHTML = actionButtons(p);
-    bindProfileActions();
-
-    $("#profileModal").classList.add("show");
-    $("#profileModal").setAttribute("aria-hidden","false");
-  }
-
-  function actionButtons(p) {
-    let html = "";
-    if (p.status === "new_enquiry") {
-      html += `<button class="primary-btn" data-action="education">Mark education completed</button>`;
-    } else if (p.status === "registration_pending" || p.status === "education_completed") {
-      html += `<button class="primary-btn" data-action="registered">Mark registered</button>`;
-    } else if (p.status === "purchase_pending") {
-      html += `<button class="primary-btn" data-action="started">Mark started saving</button>`;
-    }
-
-    if (p.phone) {
-      const clean = p.phone.replace(/[^\d+]/g,"");
-      html += `<button class="secondary-btn" data-action="whatsapp" data-phone="${escapeHtml(clean)}">Open WhatsApp</button>`;
-    }
-    html += `<button class="secondary-btn" data-action="note">Edit notes</button>`;
-    if (p.status !== "started_saving") {
-      html += `<button class="secondary-btn" data-action="noresponse">Mark no response</button>`;
-    }
-    return html;
-  }
-
-  function bindProfileActions() {
-    $$("[data-action]").forEach(btn => btn.addEventListener("click", () => {
-      const action = btn.dataset.action;
-      const { people } = Storage.getData();
-      const p = people.find(x => x.id === selectedPersonId);
-      if (!p) return;
-
-      if (action === "education") {
-        const date = localDate();
-        Storage.updatePerson(p.id, { status: "registration_pending", education_date: date });
-        Storage.addFollowup(p.id, "registration", addDays(date, cfg.FOLLOWUP_DAYS));
-        Storage.addActivity(p.id, "education_completed", "7-day registration follow up created");
-        toast("Education completed");
-      }
-
-      if (action === "registered") {
-        const date = localDate();
-        Storage.completeFollowups(p.id, "registration");
-        Storage.updatePerson(p.id, { status: "purchase_pending", registration_date: date });
-        Storage.addFollowup(p.id, "first_purchase", addDays(date, cfg.FOLLOWUP_DAYS));
-        Storage.addActivity(p.id, "registered", "7-day first purchase follow up created");
-        toast("Registered");
-      }
-
-      if (action === "started") {
-        const date = localDate();
-        Storage.completeFollowups(p.id);
-        Storage.updatePerson(p.id, { status: "started_saving", started_saving_date: date });
-        Storage.addActivity(p.id, "started_saving", "Added to Gold Saver Community");
-        toast("Mission +1 ✦");
-      }
-
-      if (action === "note") {
-        const note = prompt("Update notes:", p.notes || "");
-        if (note !== null) {
-          Storage.updatePerson(p.id, { notes: note });
-          Storage.addActivity(p.id, "note_added", "Notes updated");
-          toast("Notes updated");
-        }
-      }
-
-      if (action === "noresponse") {
-        Storage.updatePerson(p.id, { status: "no_response" });
-        toast("Marked no response");
-      }
-
-      if (action === "whatsapp") {
-        window.open(`https://wa.me/${btn.dataset.phone.replace("+","")}`, "_blank");
-        return;
-      }
-
-      renderAll();
-      openProfile(p.id);
-    }));
-  }
-
-  function empty(text) {
-    return `<div class="empty-card">${escapeHtml(text)}</div>`;
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
+    $$("#communityList .person-card").forEach(card =>
+      card.addEventListener("click", () => openProfile(card.dataset.id))
+    );
   }
 
   function renderAll() {
@@ -332,24 +239,184 @@ const App = (() => {
     renderCommunity();
   }
 
+  function openProfile(id) {
+    selectedPersonId = id;
+    const { people } = Storage.getData();
+    const p = people.find(x => x.id === id);
+    if (!p) return;
+
+    $("#profileName").textContent = p.name;
+    $("#profileMeta").textContent =
+      `${p.pg_code || p.source || "Gold Saver"} • Added ${formatDate(p.date_added)}`;
+    $("#profileNotes").textContent = p.notes || "No notes yet.";
+
+    const journey = [
+      ["Enquiry", p.date_added, !!p.date_added],
+      ["Education completed", p.education_date, !!p.education_date],
+      ["Registered", p.registration_date, !!p.registration_date],
+      ["Started saving", p.started_saving_date, !!p.started_saving_date || p.status === "started_saving"]
+    ];
+
+    $("#profileJourney").innerHTML = journey.map(([label,date,done]) => `
+      <div class="journey-step ${done ? "done" : ""}">
+        <div class="journey-dot">${done ? "✓" : "○"}</div>
+        <div>
+          <strong>${label}</strong>
+          <small>${done ? (date ? formatDate(date) : "Completed") : "Pending"}</small>
+        </div>
+      </div>`).join("");
+
+    $("#profileActions").innerHTML = actionButtons(p);
+    bindProfileActions();
+    $("#profileModal").classList.add("show");
+  }
+
+  function actionButtons(p) {
+    let html = "";
+
+    if (p.status === "new_enquiry") {
+      html += `<button class="primary-btn" data-action="education">Mark education completed</button>`;
+    } else if (p.status === "registration_pending") {
+      html += `<button class="primary-btn" data-action="registered">Mark registered</button>`;
+    } else if (p.status === "purchase_pending") {
+      html += `<button class="primary-btn" data-action="started">Mark started saving</button>`;
+    }
+
+    if (p.phone) {
+      const clean = p.phone.replace(/[^\d+]/g,"");
+      html += `<button class="secondary-btn" data-action="whatsapp" data-phone="${escapeHtml(clean)}">Open WhatsApp</button>`;
+    }
+
+    html += `<button class="secondary-btn" data-action="note">Edit notes</button>`;
+
+    if (p.status !== "started_saving") {
+      html += `<button class="secondary-btn" data-action="noresponse">Mark no response</button>`;
+    }
+
+    return html;
+  }
+
+  function bindProfileActions() {
+    $$("[data-action]").forEach(btn => btn.addEventListener("click", async () => {
+      const action = btn.dataset.action;
+      const { people } = Storage.getData();
+      const p = people.find(x => x.id === selectedPersonId);
+      if (!p) return;
+
+      try {
+        if (action === "education") {
+          const date = localDate();
+          await Storage.updatePerson(p.id, {
+            status: "registration_pending",
+            education_date: date
+          });
+          await Storage.addFollowup(p.id, "registration", addDays(date, cfg.FOLLOWUP_DAYS));
+          await Storage.addActivity(p.id, "education_completed", "7-day registration follow up created");
+          toast("Education completed");
+        }
+
+        if (action === "registered") {
+          const date = localDate();
+          await Storage.completeFollowups(p.id, "registration");
+          await Storage.updatePerson(p.id, {
+            status: "purchase_pending",
+            registration_date: date
+          });
+          await Storage.addFollowup(p.id, "first_purchase", addDays(date, cfg.FOLLOWUP_DAYS));
+          await Storage.addActivity(p.id, "registered", "7-day first purchase follow up created");
+          toast("Registered");
+        }
+
+        if (action === "started") {
+          const date = localDate();
+          await Storage.completeFollowups(p.id);
+          await Storage.updatePerson(p.id, {
+            status: "started_saving",
+            started_saving_date: date
+          });
+          await Storage.addActivity(p.id, "started_saving", "Added to Gold Saver Community");
+          toast("Mission +1 ✦");
+        }
+
+        if (action === "note") {
+          const note = prompt("Update notes:", p.notes || "");
+          if (note !== null) {
+            await Storage.updatePerson(p.id, { notes: note });
+            await Storage.addActivity(p.id, "note_added", "Notes updated");
+            toast("Notes updated");
+          }
+        }
+
+        if (action === "noresponse") {
+          await Storage.updatePerson(p.id, { status: "no_response" });
+          toast("Marked no response");
+        }
+
+        if (action === "whatsapp") {
+          window.open(`https://wa.me/${btn.dataset.phone.replace("+","")}`, "_blank");
+          return;
+        }
+
+        renderAll();
+        openProfile(p.id);
+      } catch (err) {
+        console.error(err);
+        toast(err.message || "Something went wrong");
+      }
+    }));
+  }
+
+  async function handleAuth() {
+    const session = await Storage.getSession();
+
+    if (session) {
+      $("#loginScreen").classList.add("hidden");
+      await Storage.loadAll();
+      renderAll();
+    } else {
+      $("#loginScreen").classList.remove("hidden");
+    }
+
+    $("#loginForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      $("#loginError").textContent = "";
+
+      try {
+        await Storage.signIn(
+          $("#loginEmail").value.trim(),
+          $("#loginPassword").value
+        );
+        await Storage.loadAll();
+        $("#loginScreen").classList.add("hidden");
+        renderAll();
+      } catch (err) {
+        $("#loginError").textContent = err.message || "Could not sign in.";
+      }
+    });
+
+    $("#signOutBtn")?.addEventListener("click", async () => {
+      await Storage.signOut();
+      $("#loginScreen").classList.remove("hidden");
+    });
+  }
+
   function bindUI() {
     $$(".nav-item").forEach(btn => btn.addEventListener("click", () => {
       $$(".nav-item").forEach(x => x.classList.remove("active"));
       $$(".page").forEach(x => x.classList.remove("active"));
       btn.classList.add("active");
       $(`#${btn.dataset.page}`).classList.add("active");
-      $("#pageTitle").textContent = btn.dataset.title;
     }));
 
     $("#openAddPerson").addEventListener("click", () => {
       $("#addChoiceModal").classList.add("show");
-      $("#addChoiceModal").setAttribute("aria-hidden","false");
     });
+
+    $("#openAddPersonHero")?.addEventListener("click", () => $("#openAddPerson").click());
 
     $("#chooseNewEnquiry").addEventListener("click", () => {
       $("#addChoiceModal").classList.remove("show");
       $("#personModal").classList.add("show");
-      $("#personModal").setAttribute("aria-hidden","false");
     });
 
     $("#chooseExistingSaver").addEventListener("click", () => {
@@ -357,7 +424,6 @@ const App = (() => {
       const dateInput = $("#existingSaverForm input[name='started_saving_date']");
       if (dateInput && !dateInput.value) dateInput.value = localDate();
       $("#existingSaverModal").classList.add("show");
-      $("#existingSaverModal").setAttribute("aria-hidden","false");
     });
 
     $$("[data-close-choice]").forEach(el => el.addEventListener("click", () => $("#addChoiceModal").classList.remove("show")));
@@ -365,45 +431,52 @@ const App = (() => {
     $$("[data-close-existing]").forEach(el => el.addEventListener("click", () => $("#existingSaverModal").classList.remove("show")));
     $$("[data-close-profile]").forEach(el => el.addEventListener("click", () => $("#profileModal").classList.remove("show")));
 
-    $("#personForm").addEventListener("submit", e => {
+    $("#personForm").addEventListener("submit", async e => {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
-      Storage.addPerson({
-        name: fd.get("name"),
-        phone: fd.get("phone"),
-        source: fd.get("source"),
-        notes: fd.get("notes")
-      });
-      e.currentTarget.reset();
-      $("#personModal").classList.remove("show");
-      toast("Enquiry added");
-      renderAll();
+
+      try {
+        await Storage.addPerson({
+          name: fd.get("name"),
+          phone: fd.get("phone"),
+          source: fd.get("source"),
+          notes: fd.get("notes")
+        });
+        e.currentTarget.reset();
+        $("#personModal").classList.remove("show");
+        toast("Enquiry added");
+        renderAll();
+      } catch (err) {
+        toast(err.message || "Could not add enquiry");
+      }
     });
 
-
-    $("#existingSaverForm").addEventListener("submit", e => {
+    $("#existingSaverForm").addEventListener("submit", async e => {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
-      const record = Storage.addPerson({
-        name: fd.get("name"),
-        phone: fd.get("phone"),
-        source: fd.get("source") || "Existing Frontline",
-        notes: fd.get("notes")
-      });
 
-      const startedDate = fd.get("started_saving_date") || localDate();
+      try {
+        const record = await Storage.addPerson({
+          name: fd.get("name"),
+          phone: fd.get("phone"),
+          source: fd.get("source") || "Existing Frontline",
+          notes: fd.get("notes")
+        });
 
-      Storage.updatePerson(record.id, {
-        status: "started_saving",
-        started_saving_date: startedDate
-      });
+        await Storage.updatePerson(record.id, {
+          status: "started_saving",
+          started_saving_date: fd.get("started_saving_date") || localDate()
+        });
 
-      Storage.addActivity(record.id, "started_saving", "Existing saver added to Gold Saver Community");
+        await Storage.addActivity(record.id, "started_saving", "Existing saver added to Gold Saver Community");
 
-      e.currentTarget.reset();
-      $("#existingSaverModal").classList.remove("show");
-      toast("Existing saver added • Mission +1");
-      renderAll();
+        e.currentTarget.reset();
+        $("#existingSaverModal").classList.remove("show");
+        toast("Existing saver added • Mission +1");
+        renderAll();
+      } catch (err) {
+        toast(err.message || "Could not add existing saver");
+      }
     });
 
     $("#peopleSearch").addEventListener("input", renderPeople);
@@ -424,9 +497,20 @@ const App = (() => {
     }));
   }
 
-  function init() {
+  async function init() {
     bindUI();
-    renderAll();
+    await handleAuth();
+
+    Storage.client.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        await Storage.loadAll();
+        $("#loginScreen").classList.add("hidden");
+        renderAll();
+      } else {
+        $("#loginScreen").classList.remove("hidden");
+      }
+    });
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js").catch(() => {});
     }

@@ -1,4 +1,4 @@
-const CACHE = "gold-with-elleanor-v2-dashboard";
+const CACHE = "gwe-dashboard-supabase-v1";
 const ASSETS = [
   "./",
   "./index.html",

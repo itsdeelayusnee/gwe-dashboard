@@ -10,6 +10,26 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brand-logo login-logo">GE</div>
+      <p class="section-kicker">GWE DASHBOARD</p>
+      <h1>Gold Mission Dashboard</h1>
+      <p class="login-copy">Sign in to manage enquiries, follow-ups and your 1,000-person mission.</p>
+
+      <form id="loginForm">
+        <label>Email</label>
+        <input id="loginEmail" type="email" autocomplete="email" required />
+
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required />
+
+        <button class="primary-btn" type="submit">Sign In</button>
+      </form>
+
+      <p id="loginError" class="login-error"></p>
+    </div>
+  </section>
   <div id="app" class="app-shell">
 
     <header class="brand-header">
@@ -25,6 +45,7 @@
       <div class="header-actions">
         <button class="header-btn" id="openAddPerson">Add Person</button>
         <button class="header-btn" id="toggleDarkMode">Dark Mode</button>
+        <button class="header-btn" id="signOutBtn">Sign Out</button>
       </div>
     </header>
 
