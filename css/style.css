@@ -986,3 +986,17 @@ body.auth-pending .app-shell {
   font-size: 11px;
   font-weight: 700;
 }
+
+
+/* Community filter row: wrap instead of clipping */
+#communityFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: visible;
+  white-space: normal;
+}
+
+#communityFilters .filter-chip {
+  flex: 0 0 auto;
+}
