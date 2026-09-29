@@ -235,9 +235,9 @@ const App = (() => {
 
         if (activeCommunityFilter === "all") return true;
         if (activeCommunityFilter === "recent") return months !== null && months < 3;
-        if (activeCommunityFilter === "3m") return months !== null && months >= 3;
-        if (activeCommunityFilter === "6m") return months !== null && months >= 6;
-        if (activeCommunityFilter === "12m") return months !== null && months >= 12;
+        if (activeCommunityFilter === "3to6") return months !== null && months >= 3 && months < 6;
+        if (activeCommunityFilter === "6to12") return months !== null && months >= 6 && months < 12;
+        if (activeCommunityFilter === "12plus") return months !== null && months >= 12;
         if (activeCommunityFilter === "none") return !p.last_purchase_date;
 
         return true;

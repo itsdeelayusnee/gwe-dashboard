@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1055" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1110" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -219,11 +219,11 @@
 
             <div class="filter-scroll" id="communityFilters">
               <button class="filter-chip active" data-filter="all">All</button>
-              <button class="filter-chip" data-filter="recent">Recent</button>
-              <button class="filter-chip" data-filter="3m">3+ Months</button>
-              <button class="filter-chip" data-filter="6m">6+ Months</button>
-              <button class="filter-chip" data-filter="12m">12+ Months</button>
-              <button class="filter-chip" data-filter="none">No Recent Purchase</button>
+              <button class="filter-chip" data-filter="recent">Recent &lt;3m</button>
+              <button class="filter-chip" data-filter="3to6">3–6 Months</button>
+              <button class="filter-chip" data-filter="6to12">6–12 Months</button>
+              <button class="filter-chip" data-filter="12plus">12+ Months</button>
+              <button class="filter-chip" data-filter="none">No Purchase Record</button>
             </div>
           </div>
         </section>
@@ -398,7 +398,7 @@
   </script>
   <script src="js/config.js?v=20260929-1035"></script>
   <script src="js/storage.js?v=20260929-1035"></script>
-  <script src="js/app.js?v=20260929-1055"></script>
+  <script src="js/app.js?v=20260929-1110"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const heroBtn = document.getElementById("openAddPersonHero");
