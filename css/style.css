@@ -966,3 +966,23 @@ body.auth-pending .app-shell {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+.community-tools {
+  width: min(100%, 560px);
+}
+
+.community-tools .filter-scroll {
+  margin-top: 8px;
+}
+
+.servicing-card {
+  padding: 12px 14px;
+}
+
+.servicing-meta {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}

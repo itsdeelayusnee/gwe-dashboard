@@ -2,6 +2,7 @@ const App = (() => {
   const cfg = window.APP_CONFIG;
   let activePeopleFilter = "all";
   let activeFollowupFilter = "due";
+  let activeCommunityFilter = "all";
   let selectedPersonId = null;
 
   const $ = (sel) => document.querySelector(sel);
@@ -24,6 +25,14 @@ const App = (() => {
     return new Intl.DateTimeFormat("en-GB", {
       day: "2-digit", month: "short", year: "numeric"
     }).format(new Date(`${dateStr}T12:00:00`));
+  }
+
+
+  function monthsSince(dateStr) {
+    if (!dateStr) return null;
+    const then = new Date(`${dateStr}T12:00:00`);
+    const now = new Date();
+    return (now.getFullYear() - then.getFullYear()) * 12 + (now.getMonth() - then.getMonth());
   }
 
   function statusLabel(status) {
@@ -214,23 +223,48 @@ const App = (() => {
 
     const rows = people
       .filter(p => p.status === "started_saving")
-      .filter(p => !term ||
-        p.name.toLowerCase().includes(term) ||
-        (p.pg_code || "").toLowerCase().includes(term) ||
-        (p.source || "").toLowerCase().includes(term)
-      );
+      .filter(p => {
+        const matchesSearch = !term ||
+          p.name.toLowerCase().includes(term) ||
+          (p.pg_code || "").toLowerCase().includes(term) ||
+          (p.source || "").toLowerCase().includes(term);
+
+        if (!matchesSearch) return false;
+
+        const months = monthsSince(p.last_purchase_date);
+
+        if (activeCommunityFilter === "all") return true;
+        if (activeCommunityFilter === "recent") return months !== null && months < 3;
+        if (activeCommunityFilter === "3m") return months !== null && months >= 3;
+        if (activeCommunityFilter === "6m") return months !== null && months >= 6;
+        if (activeCommunityFilter === "12m") return months !== null && months >= 12;
+        if (activeCommunityFilter === "none") return !p.last_purchase_date;
+
+        return true;
+      });
 
     $("#communityList").innerHTML = rows.length ? rows.map(p => {
       const cleanPhone = (p.phone || "").replace(/[^\d+]/g, "").replace("+", "");
       const meta = p.pg_code || p.source || "Gold Saver";
 
-      return `<article class="person-card compact-person-card">
+      let lastPurchaseText = "No recent purchase recorded";
+      if (p.last_purchase_date) {
+        lastPurchaseText = `Last purchase ${formatDate(p.last_purchase_date)}`;
+      } else if (p.last_purchase_note) {
+        lastPurchaseText = p.last_purchase_note;
+      }
+
+      return `<article class="person-card compact-person-card servicing-card">
         <div class="compact-card-main">
           <div>
             <div class="person-name">${escapeHtml(p.name)}</div>
             <div class="person-meta">${escapeHtml(meta)}</div>
           </div>
-          <span class="status-pill">Started saving</span>
+          <span class="status-pill">Saver</span>
+        </div>
+
+        <div class="servicing-meta">
+          ${escapeHtml(lastPurchaseText)}
         </div>
 
         ${cleanPhone ? `
@@ -239,7 +273,7 @@ const App = (() => {
           </div>
         ` : ""}
       </article>`;
-    }).join("") : empty("No savers found.");
+    }).join("") : empty("No savers found for this filter.");
 
     $$("#communityList .whatsapp-btn").forEach(btn =>
       btn.addEventListener("click", e => {
@@ -511,6 +545,14 @@ const App = (() => {
       btn.classList.add("active");
       activeFollowupFilter = btn.dataset.filter;
       renderFollowups();
+    }));
+
+
+    $$("#communityFilters .filter-chip").forEach(btn => btn.addEventListener("click", () => {
+      $$("#communityFilters .filter-chip").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      activeCommunityFilter = btn.dataset.filter;
+      renderCommunity();
     }));
   }
 
