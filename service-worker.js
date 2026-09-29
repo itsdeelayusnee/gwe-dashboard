@@ -1,4 +1,4 @@
-const CACHE = "gwe-dashboard-supabase-v1";
+const CACHE = "gwe-dashboard-supabase-v2-signout";
 const ASSETS = [
   "./",
   "./index.html",
