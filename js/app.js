@@ -110,7 +110,7 @@ const App = (() => {
   }
 
   function renderPeople() {
-    const { people, followups } = Storage.getData();
+    const { people } = Storage.getData();
     const term = $("#peopleSearch")?.value?.trim().toLowerCase() || "";
 
     const rows = people.filter(p => {
@@ -123,27 +123,31 @@ const App = (() => {
     });
 
     $("#peopleList").innerHTML = rows.length ? rows.map(p => {
-      const next = followups
-        .filter(f => f.person_id === p.id && f.status === "pending")
-        .sort((a,b) => a.due_date.localeCompare(b.due_date))[0];
+      const cleanPhone = (p.phone || "").replace(/[^\d+]/g, "").replace("+", "");
+      const meta = p.pg_code || p.source || "Gold Saver";
 
-      return `<article class="person-card" data-id="${p.id}">
-        <div class="person-top">
+      return `<article class="person-card compact-person-card">
+        <div class="compact-card-main">
           <div>
             <div class="person-name">${escapeHtml(p.name)}</div>
-            <div class="person-meta">${escapeHtml(p.pg_code || p.source || "Existing Saver")}</div>
+            <div class="person-meta">${escapeHtml(meta)}</div>
           </div>
           <span class="status-pill">${escapeHtml(statusLabel(p.status))}</span>
         </div>
-        <div class="card-footer">
-          <span>Added ${formatDate(p.date_added)}</span>
-          <span>${next ? `Follow up ${formatDate(next.due_date)}` : "No follow up"}</span>
-        </div>
+
+        ${cleanPhone ? `
+          <div class="compact-card-actions">
+            <button class="whatsapp-btn" data-phone="${escapeHtml(cleanPhone)}">WhatsApp</button>
+          </div>
+        ` : ""}
       </article>`;
     }).join("") : empty("No people found.");
 
-    $$(".person-card").forEach(card =>
-      card.addEventListener("click", () => openProfile(card.dataset.id))
+    $$("#peopleList .whatsapp-btn").forEach(btn =>
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        window.open(`https://wa.me/${btn.dataset.phone}`, "_blank");
+      })
     );
   }
 
@@ -164,16 +168,20 @@ const App = (() => {
 
       $(target).innerHTML = rows.length ? rows.map(f => {
         const p = people.find(x => x.id === f.person_id);
-        return `<article class="followup-card">
-          <div class="person-top">
+        const cleanPhone = (p?.phone || "").replace(/[^\d+]/g, "").replace("+", "");
+        const label = type === "registration" ? "Registration" : "First purchase";
+
+        return `<article class="followup-card compact-followup-card">
+          <div class="compact-card-main">
             <div>
               <div class="person-name">${escapeHtml(p?.name || "Unknown")}</div>
-              <div class="person-meta">${type === "registration" ? "Registration follow up" : "First purchase follow up"}</div>
+              <div class="person-meta">${label} • ${formatDate(f.due_date)}</div>
             </div>
-            <span class="status-pill">${formatDate(f.due_date)}</span>
+            <span class="status-pill">${escapeHtml(f.status)}</span>
           </div>
-          <div class="card-footer">
-            <button class="secondary-btn mini-open" data-person="${p?.id || ""}">Open</button>
+
+          <div class="compact-card-actions">
+            ${cleanPhone ? `<button class="whatsapp-btn" data-phone="${escapeHtml(cleanPhone)}">WhatsApp</button>` : ""}
             ${f.status === "pending" ? `<button class="secondary-btn mini-snooze" data-id="${f.id}">+7 days</button>` : ""}
           </div>
         </article>`;
@@ -183,9 +191,9 @@ const App = (() => {
     renderType("registration", "#registrationFollowups");
     renderType("first_purchase", "#purchaseFollowups");
 
-    $$(".mini-open").forEach(btn => btn.addEventListener("click", e => {
+    $$(".whatsapp-btn").forEach(btn => btn.addEventListener("click", e => {
       e.stopPropagation();
-      if (btn.dataset.person) openProfile(btn.dataset.person);
+      window.open(`https://wa.me/${btn.dataset.phone}`, "_blank");
     }));
 
     $$(".mini-snooze").forEach(btn => btn.addEventListener("click", async e => {
@@ -212,23 +220,32 @@ const App = (() => {
         (p.source || "").toLowerCase().includes(term)
       );
 
-    $("#communityList").innerHTML = rows.length ? rows.map(p => `
-      <article class="person-card" data-id="${p.id}">
-        <div class="person-top">
+    $("#communityList").innerHTML = rows.length ? rows.map(p => {
+      const cleanPhone = (p.phone || "").replace(/[^\d+]/g, "").replace("+", "");
+      const meta = p.pg_code || p.source || "Gold Saver";
+
+      return `<article class="person-card compact-person-card">
+        <div class="compact-card-main">
           <div>
             <div class="person-name">${escapeHtml(p.name)}</div>
-            <div class="person-meta">${escapeHtml(p.pg_code || p.source || "")}</div>
+            <div class="person-meta">${escapeHtml(meta)}</div>
           </div>
           <span class="status-pill">Started saving</span>
         </div>
-        <div class="card-footer">
-          <span>Registered ${formatDate(p.registration_date || p.date_added)}</span>
-          <span>${p.last_purchase_date ? `Last purchase ${formatDate(p.last_purchase_date)}` : (p.last_purchase_note || "Existing saver")}</span>
-        </div>
-      </article>`).join("") : empty("No savers found.");
 
-    $$("#communityList .person-card").forEach(card =>
-      card.addEventListener("click", () => openProfile(card.dataset.id))
+        ${cleanPhone ? `
+          <div class="compact-card-actions">
+            <button class="whatsapp-btn" data-phone="${escapeHtml(cleanPhone)}">WhatsApp</button>
+          </div>
+        ` : ""}
+      </article>`;
+    }).join("") : empty("No savers found.");
+
+    $$("#communityList .whatsapp-btn").forEach(btn =>
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        window.open(`https://wa.me/${btn.dataset.phone}`, "_blank");
+      })
     );
   }
 
