@@ -207,6 +207,105 @@ const App = (() => {
     }).join("");
   }
 
+
+  function normalizeLeadSource(value) {
+    const raw = (value || "").trim().toLowerCase();
+
+    if (["tiktok", "tik tok"].includes(raw)) return "TikTok";
+    if (["instagram", "ig", "insta"].includes(raw)) return "Instagram";
+    if (["threads", "thread"].includes(raw)) return "Threads";
+    if (["referral", "refer", "referred", "friend", "family"].includes(raw)) return "Referral";
+    if (["whatsapp", "wa"].includes(raw)) return "WhatsApp";
+    return raw ? "Other" : "Other";
+  }
+
+  function renderLeadSources() {
+    const { people, activities } = Storage.getData();
+    const fyStart = "2026-04";
+    const fyEnd = "2027-03";
+
+    // Lead sources are based on genuine new-enquiry activity in the FY.
+    // Prefer activity-backed enquiries; fall back to people records marked new_enquiry.
+    const activityPersonIds = new Set(
+      activities
+        .filter(a =>
+          a.activity_type === "new_enquiry" &&
+          monthKeyFromDate(a.activity_date) >= fyStart &&
+          monthKeyFromDate(a.activity_date) <= fyEnd
+        )
+        .map(a => a.person_id)
+        .filter(Boolean)
+    );
+
+    let leadPeople = people.filter(p => activityPersonIds.has(p.id));
+
+    if (!leadPeople.length) {
+      leadPeople = people.filter(p =>
+        p.status === "new_enquiry" &&
+        monthKeyFromDate(p.date_added) >= fyStart &&
+        monthKeyFromDate(p.date_added) <= fyEnd
+      );
+    }
+
+    const orderedSources = ["TikTok", "Instagram", "Threads", "Referral", "WhatsApp", "Other"];
+    const counts = Object.fromEntries(orderedSources.map(s => [s, 0]));
+
+    leadPeople.forEach(p => {
+      const source = normalizeLeadSource(p.source);
+      counts[source] = (counts[source] || 0) + 1;
+    });
+
+    const total = leadPeople.length;
+    $("#leadSourceTotal").textContent = total;
+
+    const donut = $("#leadSourceDonut");
+    const legend = $("#leadSourceLegend");
+    if (!donut || !legend) return;
+
+    const active = orderedSources
+      .map((source, i) => ({ source, count: counts[source], i }))
+      .filter(x => x.count > 0);
+
+    if (!active.length) {
+      donut.style.background = "conic-gradient(var(--line) 0 100%)";
+      legend.innerHTML = `<div class="lead-source-empty">No FY enquiries recorded yet.</div>`;
+      return;
+    }
+
+    let cursor = 0;
+    const colorVars = [
+      "var(--lead-1)",
+      "var(--lead-2)",
+      "var(--lead-3)",
+      "var(--lead-4)",
+      "var(--lead-5)",
+      "var(--lead-6)"
+    ];
+
+    const segments = active.map(item => {
+      const start = cursor;
+      const pct = (item.count / total) * 100;
+      cursor += pct;
+      return `${colorVars[item.i]} ${start}% ${cursor}%`;
+    });
+
+    donut.style.background = `conic-gradient(${segments.join(", ")})`;
+
+    legend.innerHTML = active.map(item => {
+      const pct = Math.round((item.count / total) * 100);
+      return `<div class="lead-source-row">
+        <div class="lead-source-label">
+          <i class="lead-source-dot" style="background:${colorVars[item.i]}"></i>
+          <span>${escapeHtml(item.source)}</span>
+        </div>
+        <div class="lead-source-value">
+          <strong>${item.count}</strong>
+          <span>${pct}%</span>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
   function renderDashboard() {
     const { people, followups, activities } = Storage.getData();
     const started = people.filter(p => p.status === "started_saving").length;
@@ -417,6 +516,7 @@ const recent = activities.slice(0, 6);
 
   function renderAll() {
     renderDashboard();
+    renderLeadSources();
     renderPeople();
     renderFollowups();
     renderCommunity();

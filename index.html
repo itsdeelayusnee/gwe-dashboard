@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1305" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1315" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -123,6 +123,29 @@
 
           <div class="large-panel compact-monthly-chart-panel">
             <div id="missionMonthlyChart" class="monthly-chart history-chart"></div>
+          </div>
+        </section>
+
+
+        <section class="section-block lead-source-section">
+          <div class="section-title-row lead-source-title-row">
+            <div>
+              <h3>Lead Sources</h3>
+              <p>Where your FY 2026/27 enquiries are coming from.</p>
+            </div>
+          </div>
+
+          <div class="large-panel lead-source-panel">
+            <div class="lead-source-donut-wrap">
+              <div id="leadSourceDonut" class="lead-source-donut" aria-label="Lead sources donut chart">
+                <div class="lead-source-donut-center">
+                  <strong id="leadSourceTotal">0</strong>
+                  <span>enquiries</span>
+                </div>
+              </div>
+
+              <div id="leadSourceLegend" class="lead-source-legend"></div>
+            </div>
           </div>
         </section>
 
@@ -307,16 +330,15 @@
         <input name="phone" inputmode="tel" />
 
         <label>Source *</label>
-        <select name="source" required>
-          <option value="">Select source</option>
-          <option>TikTok</option>
-          <option>Instagram</option>
-          <option>Threads</option>
-          <option>WhatsApp</option>
-          <option>Referral</option>
-          <option>Event</option>
-          <option>Other</option>
-        </select>
+        <select name="source" class="form-input" required>
+                <option value="">Select source</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Threads">Threads</option>
+                <option value="Referral">Referral</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Other">Other</option>
+              </select>
 
         <label>Notes</label>
         <textarea name="notes" rows="4"></textarea>
@@ -417,7 +439,7 @@
   </script>
   <script src="js/config.js?v=20260929-1035"></script>
   <script src="js/storage.js?v=20260929-1140"></script>
-  <script src="js/app.js?v=20260929-1225"></script>
+  <script src="js/app.js?v=20260929-1315"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const heroBtn = document.getElementById("openAddPersonHero");
