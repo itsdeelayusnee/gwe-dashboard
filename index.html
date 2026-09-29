@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1225" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1305" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -59,62 +59,69 @@
           <p>Track enquiries, guide registration, follow up on first purchases and grow your gold saver community — all in one place.</p>
         </section>
 
-        <section class="mission-snapshot-card">
-          <div class="snapshot-copy">
+        <section class="mission-dashboard-grid">
+          <article class="mission-mini-card">
             <p class="section-kicker">MISSION SNAPSHOT</p>
-            <div class="mission-big-number">
-              <strong id="missionCount">0</strong><span>/ 1,000</span>
-            </div>
-            <p class="snapshot-description">People who have started saving in gold through your guidance.</p>
-            <div class="mission-progress-row">
-              <div class="mission-progress-track">
-                <div class="mission-progress-fill" id="missionProgress"></div>
-              </div>
-              <span id="missionPercent">0% completed</span>
-            </div>
-          </div>
 
-          <div class="snapshot-action">
-            <button class="soft-btn" id="openAddPersonHero">Add Person</button>
-          </div>
+            <div class="mission-mini-number">
+              <strong id="missionCount">0</strong>
+              <span>/ 1,000</span>
+            </div>
+
+            <p class="mission-mini-copy">People who have started saving in gold through your guidance.</p>
+
+            <div class="mission-progress-track">
+              <div class="mission-progress-fill" id="missionProgress"></div>
+            </div>
+            <div class="mission-mini-footer">
+              <span id="missionPercent">0% completed</span>
+              <button class="mission-inline-add" id="openAddPersonHero">+ Add Person</button>
+            </div>
+          </article>
+
+          <article class="fy-mini-card">
+            <div class="fy-mini-head">
+              <div>
+                <p class="section-kicker">FY 2026/27</p>
+                <h3>Monthly Progress</h3>
+                <small>Apr 2026 – Mar 2027</small>
+              </div>
+
+              <select id="snapshotMonth" class="snapshot-month-select fy-month-select" aria-label="Snapshot month"></select>
+            </div>
+
+            <div class="fy-funnel-row">
+              <div class="fy-funnel-stat">
+                <span>New Enquiries</span>
+                <strong id="statNew">0</strong>
+              </div>
+              <div class="fy-funnel-stat">
+                <span>Waiting to Start</span>
+                <strong id="statWaiting">0</strong>
+              </div>
+              <div class="fy-funnel-stat">
+                <span>New Savers</span>
+                <strong id="statRegistered">0</strong>
+              </div>
+            </div>
+          </article>
         </section>
 
-        <section class="section-block">
-          <div class="section-title-row snapshot-title-row">
+        <section class="section-block monthly-progress-section">
+          <div class="monthly-progress-head">
             <div>
-              <h3>FY 2026/27 Snapshot</h3>
-              <p>April 2026 – March 2027</p>
+              <h3>Monthly Progress</h3>
+              <p>Movement across your FY funnel.</p>
             </div>
-            <select id="snapshotMonth" class="snapshot-month-select" aria-label="Snapshot month"></select>
-          </div>
 
-          <div class="metric-grid compact-snapshot-grid compact-snapshot-grid-3">
-            <article class="metric-card compact-snapshot-card">
-              <p>New Enquiries</p>
-              <strong id="statNew">0</strong>
-            </article>
-            <article class="metric-card compact-snapshot-card">
-              <p>Waiting to Start</p>
-              <strong id="statWaiting">0</strong>
-            </article>
-            <article class="metric-card compact-snapshot-card">
-              <p>New Savers</p>
-              <strong id="statRegistered">0</strong>
-            </article>
-          </div>
-
-          <div class="large-panel mission-chart-panel">
-            <div class="chart-heading">
-              <div>
-                <strong>Monthly Progress</strong>
-                <small>FY 2026/27 • monthly movement</small>
-              </div>
-            </div>
-            <div class="history-legend">
-              <span><i class="legend-dot legend-enquiry"></i>New Enquiries</span>
-              <span><i class="legend-dot legend-waiting"></i>Waiting to Start</span>
+            <div class="history-legend compact-history-legend">
+              <span><i class="legend-dot legend-enquiry"></i>Enquiries</span>
+              <span><i class="legend-dot legend-waiting"></i>Waiting</span>
               <span><i class="legend-dot legend-saver"></i>New Savers</span>
             </div>
+          </div>
+
+          <div class="large-panel compact-monthly-chart-panel">
             <div id="missionMonthlyChart" class="monthly-chart history-chart"></div>
           </div>
         </section>
