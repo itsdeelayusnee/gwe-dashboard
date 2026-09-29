@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1118" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1140" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -80,11 +80,12 @@
         </section>
 
         <section class="section-block">
-          <div class="section-title-row">
+          <div class="section-title-row snapshot-title-row">
             <div>
-              <h3>This Month</h3>
-              <p>See how your mission is moving this month.</p>
+              <h3>Monthly Snapshot</h3>
+              <p>Review your mission activity month by month.</p>
             </div>
+            <select id="snapshotMonth" class="snapshot-month-select" aria-label="Snapshot month"></select>
           </div>
 
           <div class="metric-grid">
@@ -97,13 +98,23 @@
               <strong id="statEducation">0</strong>
             </article>
             <article class="metric-card">
+              <p>Registered</p>
+              <strong id="statRegistered">0</strong>
+            </article>
+            <article class="metric-card">
               <p>Started Saving</p>
               <strong id="statSaving">0</strong>
             </article>
-            <article class="metric-card">
-              <p>Follow Ups Due</p>
-              <strong id="statFollowups">0</strong>
-            </article>
+          </div>
+
+          <div class="large-panel mission-chart-panel">
+            <div class="chart-heading">
+              <div>
+                <strong>12-Month Mission Activity</strong>
+                <small>Started saving each month</small>
+              </div>
+            </div>
+            <div id="missionMonthlyChart" class="monthly-chart"></div>
           </div>
         </section>
 
@@ -397,8 +408,8 @@
     })();
   </script>
   <script src="js/config.js?v=20260929-1035"></script>
-  <script src="js/storage.js?v=20260929-1118"></script>
-  <script src="js/app.js?v=20260929-1125"></script>
+  <script src="js/storage.js?v=20260929-1140"></script>
+  <script src="js/app.js?v=20260929-1140"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const heroBtn = document.getElementById("openAddPersonHero");

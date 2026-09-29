@@ -161,7 +161,7 @@ const Storage = (() => {
     await loadAll();
   }
 
-  async function addActivity(personId, type, details = "") {
+  async function addActivity(personId, type, details = "", activityDate = null) {
     const uid = await currentUserId();
     if (!uid) throw new Error("Not signed in");
 
@@ -171,7 +171,8 @@ const Storage = (() => {
         user_id: uid,
         person_id: personId,
         activity_type: type,
-        details: details || null
+        details: details || null,
+        ...(activityDate ? { activity_date: activityDate } : {})
       });
 
     if (error) throw error;

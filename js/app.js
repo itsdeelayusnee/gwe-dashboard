@@ -87,6 +87,82 @@ const App = (() => {
       .replaceAll("'","&#039;");
   }
 
+
+  function monthKeyFromDate(value) {
+    return value ? String(value).slice(0, 7) : "";
+  }
+
+  function monthLabel(monthKey) {
+    const [year, month] = monthKey.split("-").map(Number);
+    return new Date(year, month - 1, 1).toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric"
+    });
+  }
+
+  function lastMonthKeys(count = 12) {
+    const out = [];
+    const now = new Date();
+    for (let i = count - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    return out;
+  }
+
+  function ensureSnapshotMonthOptions() {
+    const select = $("#snapshotMonth");
+    if (!select || select.options.length) return;
+
+    const keys = lastMonthKeys(12).slice().reverse();
+    select.innerHTML = keys.map(key =>
+      `<option value="${key}">${escapeHtml(monthLabel(key))}</option>`
+    ).join("");
+
+    select.value = new Date().toISOString().slice(0, 7);
+  }
+
+  function renderMonthlySnapshot() {
+    const { activities } = Storage.getData();
+    ensureSnapshotMonthOptions();
+
+    const selectedMonth = $("#snapshotMonth")?.value || new Date().toISOString().slice(0, 7);
+
+    const countType = type => activities.filter(a =>
+      a.activity_type === type &&
+      monthKeyFromDate(a.activity_date) === selectedMonth
+    ).length;
+
+    $("#statNew").textContent = countType("new_enquiry");
+    $("#statEducation").textContent = countType("education_completed");
+    $("#statRegistered").textContent = countType("registered");
+    $("#statSaving").textContent = countType("started_saving");
+
+    const months = lastMonthKeys(12);
+    const values = months.map(key => ({
+      key,
+      label: monthLabel(key).replace(/ \d{4}$/, ""),
+      value: activities.filter(a =>
+        a.activity_type === "started_saving" &&
+        monthKeyFromDate(a.activity_date) === key
+      ).length
+    }));
+
+    const max = Math.max(1, ...values.map(x => x.value));
+    const chart = $("#missionMonthlyChart");
+
+    chart.innerHTML = values.map(item => {
+      const height = item.value === 0 ? 3 : Math.max(10, Math.round((item.value / max) * 100));
+      return `<div class="month-bar-item" title="${escapeHtml(monthLabel(item.key))}: ${item.value}">
+        <div class="month-bar-value">${item.value || ""}</div>
+        <div class="month-bar-track">
+          <div class="month-bar-fill" style="height:${height}%"></div>
+        </div>
+        <div class="month-bar-label">${escapeHtml(item.label)}</div>
+      </div>`;
+    }).join("");
+  }
+
   function renderDashboard() {
     const { people, followups, activities } = Storage.getData();
     const started = people.filter(p => p.status === "started_saving").length;
@@ -97,15 +173,9 @@ const App = (() => {
     $("#missionProgress").style.width = `${pct}%`;
     $("#missionPercent").textContent = `${pct.toFixed(1)}% completed`;
 
-    const monthKey = new Date().toISOString().slice(0, 7);
-    $("#statNew").textContent = people.filter(p => p.status === "new_enquiry" && p.date_added?.startsWith(monthKey)).length;
-    $("#statEducation").textContent = people.filter(p => p.education_date?.startsWith(monthKey)).length;
-    $("#statSaving").textContent = people.filter(p => p.started_saving_date?.startsWith(monthKey)).length;
+    renderMonthlySnapshot();
 
-    const today = localDate();
-    $("#statFollowups").textContent = followups.filter(f => f.status === "pending" && f.due_date <= today).length;
-
-    const recent = activities.slice(0, 6);
+const recent = activities.slice(0, 6);
     $("#recentActivity").innerHTML = recent.length ? recent.map(a => {
       const person = people.find(p => p.id === a.person_id);
       return `<div class="activity-card">
@@ -505,12 +575,13 @@ const App = (() => {
       const fd = new FormData(e.currentTarget);
 
       try {
-        await Storage.addPerson({
+        const record = await Storage.addPerson({
           name: fd.get("name"),
           phone: fd.get("phone"),
           source: fd.get("source"),
           notes: fd.get("notes")
         });
+        await Storage.addActivity(record.id, "new_enquiry", "New enquiry added");
         e.currentTarget.reset();
         $("#personModal").classList.remove("show");
         toast("Enquiry added");
@@ -537,7 +608,12 @@ const App = (() => {
           started_saving_date: fd.get("started_saving_date") || localDate()
         });
 
-        await Storage.addActivity(record.id, "started_saving", "Existing saver added to Gold Saver Community");
+        await Storage.addActivity(
+          record.id,
+          "started_saving",
+          "Existing saver added to Gold Saver Community",
+          fd.get("started_saving_date") || localDate()
+        );
 
         e.currentTarget.reset();
         $("#existingSaverModal").classList.remove("show");
@@ -550,6 +626,7 @@ const App = (() => {
 
     $("#peopleSearch").addEventListener("input", renderPeople);
     $("#communitySearch").addEventListener("input", renderCommunity);
+    $("#snapshotMonth")?.addEventListener("change", renderMonthlySnapshot);
 
     $$("#peopleFilters .filter-chip").forEach(btn => btn.addEventListener("click", () => {
       $$("#peopleFilters .filter-chip").forEach(x => x.classList.remove("active"));
