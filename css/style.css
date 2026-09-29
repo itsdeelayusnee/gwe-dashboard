@@ -1124,3 +1124,110 @@ body.auth-pending .app-shell {
     font-size: 8px;
   }
 }
+
+
+/* 2026 historical activity chart */
+.history-chart {
+  height: 205px;
+}
+
+.history-month {
+  grid-template-rows: 22px 1fr 24px;
+}
+
+.history-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  font-size: 8px;
+  font-weight: 850;
+  color: var(--muted);
+}
+
+.history-bars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 2px;
+  height: 100%;
+}
+
+.history-bar-track {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--line) 45%, transparent);
+}
+
+.history-bar-fill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 5px 5px 2px 2px;
+}
+
+.history-registered {
+  background: var(--gold);
+}
+
+.history-purchase {
+  background: var(--gold-deep);
+  opacity: .72;
+}
+
+.history-started {
+  background: var(--text);
+  opacity: .72;
+}
+
+.history-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.history-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.legend-registered {
+  background: var(--gold);
+}
+
+.legend-purchase {
+  background: var(--gold-deep);
+  opacity: .72;
+}
+
+.legend-started {
+  background: var(--text);
+  opacity: .72;
+}
+
+@media (max-width: 640px) {
+  .history-chart {
+    height: 185px;
+  }
+
+  .history-values {
+    font-size: 7px;
+  }
+
+  .history-bars {
+    gap: 1px;
+  }
+}

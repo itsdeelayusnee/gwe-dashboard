@@ -123,40 +123,68 @@ const App = (() => {
   }
 
   function renderMonthlySnapshot() {
-    const { activities } = Storage.getData();
+    const { people, activities } = Storage.getData();
     ensureSnapshotMonthOptions();
 
     const selectedMonth = $("#snapshotMonth")?.value || new Date().toISOString().slice(0, 7);
 
-    const countType = type => activities.filter(a =>
+    const countActivity = type => activities.filter(a =>
       a.activity_type === type &&
       monthKeyFromDate(a.activity_date) === selectedMonth
     ).length;
 
-    $("#statNew").textContent = countType("new_enquiry");
-    $("#statEducation").textContent = countType("education_completed");
-    $("#statRegistered").textContent = countType("registered");
-    $("#statSaving").textContent = countType("started_saving");
+    const countPeopleDate = field => people.filter(p =>
+      monthKeyFromDate(p[field]) === selectedMonth
+    ).length;
 
-    const months = lastMonthKeys(12);
-    const values = months.map(key => ({
-      key,
-      label: monthLabel(key).replace(/ \d{4}$/, ""),
-      value: activities.filter(a =>
+    $("#statNew").textContent = countActivity("new_enquiry");
+    $("#statEducation").textContent = countActivity("education_completed");
+    $("#statRegistered").textContent = countPeopleDate("registration_date");
+    $("#statSaving").textContent = countActivity("started_saving");
+
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const key = `2026-${String(i + 1).padStart(2, "0")}`;
+      const registered = people.filter(p => monthKeyFromDate(p.registration_date) === key).length;
+      const lastPurchase = people.filter(p => monthKeyFromDate(p.last_purchase_date) === key).length;
+      const startedSaving = activities.filter(a =>
         a.activity_type === "started_saving" &&
         monthKeyFromDate(a.activity_date) === key
-      ).length
-    }));
+      ).length;
 
-    const max = Math.max(1, ...values.map(x => x.value));
+      return {
+        key,
+        label: new Date(2026, i, 1).toLocaleDateString(undefined, { month: "short" }),
+        registered,
+        lastPurchase,
+        startedSaving
+      };
+    });
+
+    const max = Math.max(
+      1,
+      ...months.flatMap(x => [x.registered, x.lastPurchase, x.startedSaving])
+    );
+
     const chart = $("#missionMonthlyChart");
+    chart.innerHTML = months.map(item => {
+      const h = value => value === 0 ? 2 : Math.max(8, Math.round((value / max) * 100));
 
-    chart.innerHTML = values.map(item => {
-      const height = item.value === 0 ? 3 : Math.max(10, Math.round((item.value / max) * 100));
-      return `<div class="month-bar-item" title="${escapeHtml(monthLabel(item.key))}: ${item.value}">
-        <div class="month-bar-value">${item.value || ""}</div>
-        <div class="month-bar-track">
-          <div class="month-bar-fill" style="height:${height}%"></div>
+      return `<div class="month-bar-item history-month" title="${escapeHtml(monthLabel(item.key))}">
+        <div class="history-values">
+          <span>${item.registered || ""}</span>
+          <span>${item.lastPurchase || ""}</span>
+          <span>${item.startedSaving || ""}</span>
+        </div>
+        <div class="history-bars">
+          <div class="history-bar-track" title="Registered: ${item.registered}">
+            <div class="history-bar-fill history-registered" style="height:${h(item.registered)}%"></div>
+          </div>
+          <div class="history-bar-track" title="Last purchase: ${item.lastPurchase}">
+            <div class="history-bar-fill history-purchase" style="height:${h(item.lastPurchase)}%"></div>
+          </div>
+          <div class="history-bar-track" title="Started saving: ${item.startedSaving}">
+            <div class="history-bar-fill history-started" style="height:${h(item.startedSaving)}%"></div>
+          </div>
         </div>
         <div class="month-bar-label">${escapeHtml(item.label)}</div>
       </div>`;

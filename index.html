@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1140" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1205" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -110,11 +110,16 @@
           <div class="large-panel mission-chart-panel">
             <div class="chart-heading">
               <div>
-                <strong>12-Month Mission Activity</strong>
-                <small>Started saving each month</small>
+                <strong>2026 Historical Activity</strong>
+                <small>Registrations, last purchases and new started-saving activity</small>
               </div>
             </div>
-            <div id="missionMonthlyChart" class="monthly-chart"></div>
+            <div class="history-legend">
+              <span><i class="legend-dot legend-registered"></i>Registered</span>
+              <span><i class="legend-dot legend-purchase"></i>Last Purchase</span>
+              <span><i class="legend-dot legend-started"></i>Started Saving</span>
+            </div>
+            <div id="missionMonthlyChart" class="monthly-chart history-chart"></div>
           </div>
         </section>
 
@@ -409,7 +414,7 @@
   </script>
   <script src="js/config.js?v=20260929-1035"></script>
   <script src="js/storage.js?v=20260929-1140"></script>
-  <script src="js/app.js?v=20260929-1140"></script>
+  <script src="js/app.js?v=20260929-1205"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const heroBtn = document.getElementById("openAddPersonHero");
