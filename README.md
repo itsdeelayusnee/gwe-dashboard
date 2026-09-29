@@ -45,3 +45,17 @@ Then open:
 http://localhost:8000
 
 PWA/service workers require HTTPS in production (localhost is allowed for testing).
+
+
+## Existing savers
+Use the + button → **Add Existing Saver**. Existing savers are added directly to Community, skip all follow-ups, and count toward the 1,000-person mission.
+
+
+## Dashboard redesign
+The interface has been restyled to match the visual family of the doitsaving.bn Hybrid Finance dashboard: branded header, cream dashboard background, large rounded panels, mission snapshot, monthly metrics and fixed bottom navigation.
+
+
+## Supabase project connected
+This build now contains the project's Supabase URL and publishable browser key in `js/config.js`.
+
+The current data adapter still uses local browser storage until authentication is added. Because the GWE tables use Row Level Security tied to `auth.uid()`, the next step is to add the private email/password login and then replace the localStorage adapter with Supabase reads/writes.

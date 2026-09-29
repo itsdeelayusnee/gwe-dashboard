@@ -3,7 +3,7 @@
   "short_name": "Gold with Elleanor",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f7f2e8",
-  "theme_color": "#f7f2e8",
+  "background_color": "#f4ede3",
+  "theme_color": "#f4ede3",
   "icons": []
 }

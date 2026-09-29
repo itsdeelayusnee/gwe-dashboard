@@ -3,106 +3,203 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f7f2e8" />
+  <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Gold with Elleanor</p>
-        <h1 id="pageTitle">Mission</h1>
+  <div id="app" class="app-shell">
+
+    <header class="brand-header">
+      <div class="brand-lockup">
+        <div class="brand-logo">GE</div>
+        <div class="brand-copy">
+          <p class="brand-kicker">goldwithelleanor.bn</p>
+          <h1>Gold Mission Dashboard</h1>
+          <p class="brand-subtitle">Leads • Follow Ups • Community • Mission</p>
+        </div>
       </div>
-      <button class="icon-btn" id="openAddPerson" aria-label="Add person">＋</button>
+
+      <div class="header-actions">
+        <button class="header-btn" id="openAddPerson">Add Person</button>
+        <button class="header-btn" id="toggleDarkMode">Dark Mode</button>
+      </div>
     </header>
 
-    <main class="content">
+    <main class="dashboard-wrap">
+
       <section id="missionPage" class="page active">
-        <div class="hero-card">
-          <p class="eyebrow light">MY MISSION</p>
+
+        <section class="intro-card">
+          <p class="section-kicker">YOUR GOLD SAVING MISSION</p>
           <h2>Helping 1,000 people start saving in gold.</h2>
-          <div class="mission-number">
-            <strong id="missionCount">0</strong><span>/ 1,000</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="missionProgress"></div>
-          </div>
-          <p class="progress-label" id="missionPercent">0% completed</p>
-        </div>
+          <p>Track enquiries, guide registration, follow up on first purchases and grow your gold saver community — all in one place.</p>
+        </section>
 
-        <div class="section-heading">
-          <h3>This month</h3>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span>New enquiries</span>
-            <strong id="statNew">0</strong>
+        <section class="mission-snapshot-card">
+          <div class="snapshot-copy">
+            <p class="section-kicker">MISSION SNAPSHOT</p>
+            <div class="mission-big-number">
+              <strong id="missionCount">0</strong><span>/ 1,000</span>
+            </div>
+            <p class="snapshot-description">People who have started saving in gold through your guidance.</p>
+            <div class="mission-progress-row">
+              <div class="mission-progress-track">
+                <div class="mission-progress-fill" id="missionProgress"></div>
+              </div>
+              <span id="missionPercent">0% completed</span>
+            </div>
           </div>
-          <div class="stat-card">
-            <span>Education completed</span>
-            <strong id="statEducation">0</strong>
-          </div>
-          <div class="stat-card">
-            <span>Started saving</span>
-            <strong id="statSaving">0</strong>
-          </div>
-          <div class="stat-card">
-            <span>Follow ups due</span>
-            <strong id="statFollowups">0</strong>
-          </div>
-        </div>
 
-        <div class="section-heading row-between">
-          <h3>Recent activity</h3>
-        </div>
-        <div id="recentActivity" class="stack"></div>
+          <div class="snapshot-action">
+            <button class="soft-btn" id="openAddPersonHero">Add Person</button>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-title-row">
+            <div>
+              <h3>This Month</h3>
+              <p>See how your mission is moving this month.</p>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <p>New Enquiries</p>
+              <strong id="statNew">0</strong>
+            </article>
+            <article class="metric-card">
+              <p>Education Completed</p>
+              <strong id="statEducation">0</strong>
+            </article>
+            <article class="metric-card">
+              <p>Started Saving</p>
+              <strong id="statSaving">0</strong>
+            </article>
+            <article class="metric-card">
+              <p>Follow Ups Due</p>
+              <strong id="statFollowups">0</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-title-row">
+            <div>
+              <h3>Recent Activity</h3>
+              <p>Your latest lead and saver updates.</p>
+            </div>
+          </div>
+
+          <div class="large-panel">
+            <div id="recentActivity" class="stack"></div>
+          </div>
+        </section>
+
       </section>
 
       <section id="peoplePage" class="page">
-        <div class="search-wrap">
-          <input id="peopleSearch" class="search-input" placeholder="Search people" />
-        </div>
-        <div class="filter-scroll" id="peopleFilters">
-          <button class="filter-chip active" data-filter="all">All</button>
-          <button class="filter-chip" data-filter="new_enquiry">New</button>
-          <button class="filter-chip" data-filter="registration_pending">Registration</button>
-          <button class="filter-chip" data-filter="purchase_pending">Purchase</button>
-          <button class="filter-chip" data-filter="started_saving">Started</button>
-          <button class="filter-chip" data-filter="no_response">No response</button>
-        </div>
-        <div id="peopleList" class="stack"></div>
+
+        <section class="intro-card compact-intro">
+          <p class="section-kicker">PEOPLE</p>
+          <h2>Manage every enquiry from first contact to first purchase.</h2>
+          <p>Keep registration and purchase follow-ups simple without tracking personal gold holdings.</p>
+        </section>
+
+        <section class="section-block">
+          <div class="toolbar-card">
+            <div class="search-wrap">
+              <input id="peopleSearch" class="search-input" placeholder="Search people" />
+            </div>
+
+            <div class="filter-scroll" id="peopleFilters">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="new_enquiry">New</button>
+              <button class="filter-chip" data-filter="registration_pending">Registration</button>
+              <button class="filter-chip" data-filter="purchase_pending">Purchase</button>
+              <button class="filter-chip" data-filter="started_saving">Started</button>
+              <button class="filter-chip" data-filter="no_response">No Response</button>
+            </div>
+          </div>
+
+          <div id="peopleList" class="cards-list"></div>
+        </section>
       </section>
 
       <section id="followupsPage" class="page">
-        <div class="filter-scroll" id="followupFilters">
-          <button class="filter-chip active" data-filter="due">Due</button>
-          <button class="filter-chip" data-filter="upcoming">Upcoming</button>
-          <button class="filter-chip" data-filter="completed">Completed</button>
-        </div>
-        <div class="section-heading">
-          <h3>Registration follow ups</h3>
-        </div>
-        <div id="registrationFollowups" class="stack"></div>
 
-        <div class="section-heading top-gap">
-          <h3>First purchase follow ups</h3>
-        </div>
-        <div id="purchaseFollowups" class="stack"></div>
+        <section class="intro-card compact-intro">
+          <p class="section-kicker">FOLLOW UPS</p>
+          <h2>Only follow up when action is actually needed.</h2>
+          <p>Registration reminders begin 7 days after education. First-purchase reminders begin 7 days after registration.</p>
+        </section>
+
+        <section class="section-block">
+          <div class="toolbar-card">
+            <div class="filter-scroll" id="followupFilters">
+              <button class="filter-chip active" data-filter="due">Due</button>
+              <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+              <button class="filter-chip" data-filter="completed">Completed</button>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div>
+              <div class="section-title-row small">
+                <div>
+                  <h3>Registration Follow Ups</h3>
+                  <p>Educated but not registered yet.</p>
+                </div>
+              </div>
+              <div class="large-panel">
+                <div id="registrationFollowups" class="stack"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-title-row small">
+                <div>
+                  <h3>First Purchase Follow Ups</h3>
+                  <p>Registered but no first purchase yet.</p>
+                </div>
+              </div>
+              <div class="large-panel">
+                <div id="purchaseFollowups" class="stack"></div>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section id="communityPage" class="page">
-        <div class="community-banner">
-          <p class="eyebrow">GOLD SAVER COMMUNITY</p>
-          <strong id="communityCount">0</strong>
-          <span>people helped</span>
-        </div>
-        <div class="search-wrap">
-          <input id="communitySearch" class="search-input" placeholder="Search community" />
-        </div>
-        <div id="communityList" class="stack"></div>
+
+        <section class="intro-card compact-intro">
+          <p class="section-kicker">GOLD SAVER COMMUNITY</p>
+          <h2>Your growing community of people who have started saving in gold.</h2>
+          <p>Existing savers and newly converted leads appear here automatically.</p>
+        </section>
+
+        <section class="community-summary-card">
+          <div>
+            <p class="section-kicker">PEOPLE HELPED</p>
+            <div class="community-number">
+              <strong id="communityCount">0</strong>
+              <span>people</span>
+            </div>
+          </div>
+
+          <div class="search-wrap community-search">
+            <input id="communitySearch" class="search-input" placeholder="Search community" />
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div id="communityList" class="cards-list"></div>
+        </section>
+
       </section>
     </main>
 
@@ -111,10 +208,10 @@
         <span>⌂</span><small>Mission</small>
       </button>
       <button class="nav-item" data-page="peoplePage" data-title="People">
-        <span>♙</span><small>People</small>
+        <span>⇄</span><small>People</small>
       </button>
       <button class="nav-item" data-page="followupsPage" data-title="Follow Ups">
-        <span>◴</span><small>Follow Ups</small>
+        <span>◉</span><small>Follow Ups</small>
       </button>
       <button class="nav-item" data-page="communityPage" data-title="Community">
         <span>✦</span><small>Community</small>
@@ -122,16 +219,35 @@
     </nav>
   </div>
 
+  <div class="modal" id="addChoiceModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-choice></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="section-kicker">ADD PERSON</p>
+          <h2>What would you like to add?</h2>
+        </div>
+        <button class="icon-btn ghost" data-close-choice>×</button>
+      </div>
+
+      <div class="action-stack">
+        <button class="primary-btn" id="chooseNewEnquiry">Add New Enquiry</button>
+        <button class="secondary-btn" id="chooseExistingSaver">Add Existing Saver</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="personModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
     <div class="modal-card">
       <div class="modal-head">
         <div>
-          <p class="eyebrow">NEW ENQUIRY</p>
+          <p class="section-kicker">NEW ENQUIRY</p>
           <h2>Add person</h2>
         </div>
         <button class="icon-btn ghost" data-close-modal>×</button>
       </div>
+
       <form id="personForm">
         <label>Name *</label>
         <input name="name" required />
@@ -154,7 +270,53 @@
         <label>Notes</label>
         <textarea name="notes" rows="4"></textarea>
 
-        <button class="primary-btn" type="submit">Save enquiry</button>
+        <button class="primary-btn" type="submit">Save Enquiry</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="existingSaverModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-existing></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="section-kicker">EXISTING SAVER</p>
+          <h2>Add existing saver</h2>
+        </div>
+        <button class="icon-btn ghost" data-close-existing>×</button>
+      </div>
+
+      <form id="existingSaverForm">
+        <label>Name *</label>
+        <input name="name" required />
+
+        <label>Contact</label>
+        <input name="phone" inputmode="tel" />
+
+        <label>Source</label>
+        <select name="source">
+          <option value="">Select source</option>
+          <option>TikTok</option>
+          <option>Instagram</option>
+          <option>Threads</option>
+          <option>WhatsApp</option>
+          <option>Referral</option>
+          <option>Event</option>
+          <option>Existing Frontline</option>
+          <option>Other</option>
+        </select>
+
+        <label>Started Saving Date</label>
+        <input name="started_saving_date" type="date" />
+
+        <label>Notes</label>
+        <textarea name="notes" rows="4"></textarea>
+
+        <p class="form-note">
+          Existing savers are added directly to Community and count toward your 1,000-person mission.
+        </p>
+
+        <button class="primary-btn" type="submit">Add to Community</button>
       </form>
     </div>
   </div>
@@ -164,7 +326,7 @@
     <div class="modal-card profile-card">
       <div class="modal-head">
         <div>
-          <p class="eyebrow">PERSON PROFILE</p>
+          <p class="section-kicker">PERSON PROFILE</p>
           <h2 id="profileName">Person</h2>
           <p class="muted" id="profileMeta"></p>
         </div>
@@ -174,7 +336,7 @@
       <div id="profileJourney" class="journey"></div>
 
       <div class="profile-notes">
-        <p class="eyebrow">NOTES</p>
+        <p class="section-kicker">NOTES</p>
         <p id="profileNotes" class="muted">No notes yet.</p>
       </div>
 
@@ -187,5 +349,20 @@
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const heroBtn = document.getElementById("openAddPersonHero");
+      const topBtn = document.getElementById("openAddPerson");
+      if (heroBtn && topBtn) heroBtn.addEventListener("click", () => topBtn.click());
+
+      const darkBtn = document.getElementById("toggleDarkMode");
+      if (darkBtn) {
+        darkBtn.addEventListener("click", () => {
+          document.body.classList.toggle("dark");
+          darkBtn.textContent = document.body.classList.contains("dark") ? "Light Mode" : "Dark Mode";
+        });
+      }
+    });
+  </script>
 </body>
 </html>

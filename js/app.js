@@ -342,11 +342,27 @@ const App = (() => {
     }));
 
     $("#openAddPerson").addEventListener("click", () => {
+      $("#addChoiceModal").classList.add("show");
+      $("#addChoiceModal").setAttribute("aria-hidden","false");
+    });
+
+    $("#chooseNewEnquiry").addEventListener("click", () => {
+      $("#addChoiceModal").classList.remove("show");
       $("#personModal").classList.add("show");
       $("#personModal").setAttribute("aria-hidden","false");
     });
 
+    $("#chooseExistingSaver").addEventListener("click", () => {
+      $("#addChoiceModal").classList.remove("show");
+      const dateInput = $("#existingSaverForm input[name='started_saving_date']");
+      if (dateInput && !dateInput.value) dateInput.value = localDate();
+      $("#existingSaverModal").classList.add("show");
+      $("#existingSaverModal").setAttribute("aria-hidden","false");
+    });
+
+    $$("[data-close-choice]").forEach(el => el.addEventListener("click", () => $("#addChoiceModal").classList.remove("show")));
     $$("[data-close-modal]").forEach(el => el.addEventListener("click", () => $("#personModal").classList.remove("show")));
+    $$("[data-close-existing]").forEach(el => el.addEventListener("click", () => $("#existingSaverModal").classList.remove("show")));
     $$("[data-close-profile]").forEach(el => el.addEventListener("click", () => $("#profileModal").classList.remove("show")));
 
     $("#personForm").addEventListener("submit", e => {
@@ -361,6 +377,32 @@ const App = (() => {
       e.currentTarget.reset();
       $("#personModal").classList.remove("show");
       toast("Enquiry added");
+      renderAll();
+    });
+
+
+    $("#existingSaverForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      const record = Storage.addPerson({
+        name: fd.get("name"),
+        phone: fd.get("phone"),
+        source: fd.get("source") || "Existing Frontline",
+        notes: fd.get("notes")
+      });
+
+      const startedDate = fd.get("started_saving_date") || localDate();
+
+      Storage.updatePerson(record.id, {
+        status: "started_saving",
+        started_saving_date: startedDate
+      });
+
+      Storage.addActivity(record.id, "started_saving", "Existing saver added to Gold Saver Community");
+
+      e.currentTarget.reset();
+      $("#existingSaverModal").classList.remove("show");
+      toast("Existing saver added • Mission +1");
       renderAll();
     });
 

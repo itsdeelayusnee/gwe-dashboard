@@ -1,4 +1,4 @@
-const CACHE = "gold-with-elleanor-v1";
+const CACHE = "gold-with-elleanor-v2-dashboard";
 const ASSETS = [
   "./",
   "./index.html",
