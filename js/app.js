@@ -136,40 +136,38 @@ const App = (() => {
       monthKeyFromDate(a.activity_date) === selectedMonth
     ).length;
 
-    const countPeopleDate = field => people.filter(p =>
-      monthKeyFromDate(p[field]) === selectedMonth
-    ).length;
-
-    // Selected-month metrics
+    // Snapshot cards
     $("#statNew").textContent = countActivity("new_enquiry");
 
     const waitingToStart = people.filter(p =>
       p.status === "purchase_pending"
     ).length;
-
     $("#statWaiting").textContent = waitingToStart;
 
-    // Full FY metric: registered during FY 2026/27 + a purchase recorded during the same FY.
     const newSaversFY = people.filter(p =>
       isInFY2026(p.registration_date) &&
       isInFY2026(p.last_purchase_date)
     ).length;
-
     $("#statRegistered").textContent = newSaversFY;
 
-    // FY chart in Apr → Mar order.
+    // Monthly movement:
+    // - New Enquiries = enquiry activity recorded that month
+    // - Waiting to Start = people registered that month and currently purchase_pending
+    // - New Savers = people registered that month who have a purchase recorded in the FY
     const months = fy2026MonthKeys().map(key => {
-      const registered = people.filter(p =>
-        monthKeyFromDate(p.registration_date) === key
-      ).length;
-
-      const lastPurchase = people.filter(p =>
-        monthKeyFromDate(p.last_purchase_date) === key
-      ).length;
-
-      const startedSaving = activities.filter(a =>
-        a.activity_type === "started_saving" &&
+      const newEnquiries = activities.filter(a =>
+        a.activity_type === "new_enquiry" &&
         monthKeyFromDate(a.activity_date) === key
+      ).length;
+
+      const waiting = people.filter(p =>
+        monthKeyFromDate(p.registration_date) === key &&
+        p.status === "purchase_pending"
+      ).length;
+
+      const newSavers = people.filter(p =>
+        monthKeyFromDate(p.registration_date) === key &&
+        isInFY2026(p.last_purchase_date)
       ).length;
 
       const [year, month] = key.split("-").map(Number);
@@ -177,39 +175,34 @@ const App = (() => {
       return {
         key,
         label: new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: "short" }),
-        registered,
-        lastPurchase,
-        startedSaving
+        newEnquiries,
+        waiting,
+        newSavers
       };
     });
 
-    const max = Math.max(
+    const maxTotal = Math.max(
       1,
-      ...months.flatMap(x => [x.registered, x.lastPurchase, x.startedSaving])
+      ...months.map(x => x.newEnquiries + x.waiting + x.newSavers)
     );
 
     const chart = $("#missionMonthlyChart");
     chart.innerHTML = months.map(item => {
-      const h = value => value === 0 ? 2 : Math.max(8, Math.round((value / max) * 100));
+      const total = item.newEnquiries + item.waiting + item.newSavers;
+      const h = total === 0 ? 2 : Math.max(10, Math.round((total / maxTotal) * 100));
 
-      return `<div class="month-bar-item history-month" title="${escapeHtml(monthLabel(item.key))}">
-        <div class="history-values">
-          <span>${item.registered || ""}</span>
-          <span>${item.lastPurchase || ""}</span>
-          <span>${item.startedSaving || ""}</span>
+      const enquiriesPct = total ? (item.newEnquiries / total) * 100 : 0;
+      const waitingPct = total ? (item.waiting / total) * 100 : 0;
+      const saversPct = total ? (item.newSavers / total) * 100 : 0;
+
+      return `<div class="stack-month-item" title="${escapeHtml(monthLabel(item.key))}">
+        <div class="stack-total">${total || ""}</div>
+        <div class="stack-bar-shell" style="height:${h}%">
+          ${item.newSavers ? `<div class="stack-segment stack-saver" style="height:${saversPct}%" title="New Savers: ${item.newSavers}"></div>` : ""}
+          ${item.waiting ? `<div class="stack-segment stack-waiting" style="height:${waitingPct}%" title="Waiting to Start: ${item.waiting}"></div>` : ""}
+          ${item.newEnquiries ? `<div class="stack-segment stack-enquiry" style="height:${enquiriesPct}%" title="New Enquiries: ${item.newEnquiries}"></div>` : ""}
         </div>
-        <div class="history-bars">
-          <div class="history-bar-track" title="Registered: ${item.registered}">
-            <div class="history-bar-fill history-registered" style="height:${h(item.registered)}%"></div>
-          </div>
-          <div class="history-bar-track" title="Last purchase: ${item.lastPurchase}">
-            <div class="history-bar-fill history-purchase" style="height:${h(item.lastPurchase)}%"></div>
-          </div>
-          <div class="history-bar-track" title="Started saving: ${item.startedSaving}">
-            <div class="history-bar-fill history-started" style="height:${h(item.startedSaving)}%"></div>
-          </div>
-        </div>
-        <div class="month-bar-label">${escapeHtml(item.label)}</div>
+        <div class="stack-label">${escapeHtml(item.label)}</div>
       </div>`;
     }).join("");
   }

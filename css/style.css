@@ -1315,3 +1315,96 @@ body.auth-pending .app-shell {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* Monthly stacked movement chart */
+.history-chart {
+  height: 170px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(18px, 1fr));
+  align-items: end;
+  gap: 8px;
+}
+
+.stack-month-item {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 18px 1fr 22px;
+  align-items: end;
+  min-width: 0;
+  text-align: center;
+}
+
+.stack-total {
+  min-height: 18px;
+  font-size: 9px;
+  font-weight: 850;
+  color: var(--muted);
+}
+
+.stack-bar-shell {
+  width: 100%;
+  min-height: 2px;
+  align-self: end;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  overflow: hidden;
+  border-radius: 7px 7px 3px 3px;
+  background: color-mix(in srgb, var(--line) 45%, transparent);
+}
+
+.stack-segment {
+  width: 100%;
+  min-height: 2px;
+}
+
+.stack-enquiry {
+  background: var(--text);
+  opacity: .68;
+}
+
+.stack-waiting {
+  background: var(--gold-deep);
+  opacity: .68;
+}
+
+.stack-saver {
+  background: var(--gold);
+}
+
+.stack-label {
+  padding-top: 6px;
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.legend-enquiry {
+  background: var(--text);
+  opacity: .68;
+}
+
+.legend-waiting {
+  background: var(--gold-deep);
+  opacity: .68;
+}
+
+.legend-saver {
+  background: var(--gold);
+}
+
+@media (max-width: 720px) {
+  .history-chart {
+    height: 155px;
+    gap: 4px;
+  }
+
+  .stack-label {
+    font-size: 8px;
+  }
+
+  .stack-total {
+    font-size: 8px;
+  }
+}
