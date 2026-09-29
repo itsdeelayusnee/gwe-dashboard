@@ -98,7 +98,7 @@ const App = (() => {
     $("#missionPercent").textContent = `${pct.toFixed(1)}% completed`;
 
     const monthKey = new Date().toISOString().slice(0, 7);
-    $("#statNew").textContent = people.filter(p => p.date_added?.startsWith(monthKey)).length;
+    $("#statNew").textContent = people.filter(p => p.status === "new_enquiry" && p.date_added?.startsWith(monthKey)).length;
     $("#statEducation").textContent = people.filter(p => p.education_date?.startsWith(monthKey)).length;
     $("#statSaving").textContent = people.filter(p => p.started_saving_date?.startsWith(monthKey)).length;
 
@@ -144,11 +144,10 @@ const App = (() => {
           <span class="status-pill">${escapeHtml(statusLabel(p.status))}</span>
         </div>
 
-        ${cleanPhone ? `
-          <div class="compact-card-actions">
-            <button class="whatsapp-btn" data-phone="${escapeHtml(cleanPhone)}">WhatsApp</button>
-          </div>
-        ` : ""}
+        <div class="compact-card-actions">
+          ${cleanPhone ? `<button class="whatsapp-btn" data-phone="${escapeHtml(cleanPhone)}">WhatsApp</button>` : ""}
+          <button class="delete-person-btn" data-id="${p.id}" data-name="${escapeHtml(p.name)}">Delete</button>
+        </div>
       </article>`;
     }).join("") : empty("No people found.");
 
@@ -156,6 +155,25 @@ const App = (() => {
       btn.addEventListener("click", e => {
         e.stopPropagation();
         window.open(`https://wa.me/${btn.dataset.phone}`, "_blank");
+      })
+    );
+
+    $$("#peopleList .delete-person-btn").forEach(btn =>
+      btn.addEventListener("click", async e => {
+        e.stopPropagation();
+
+        const personName = btn.dataset.name || "this person";
+        const confirmed = window.confirm(`Delete ${personName}? This will also remove their follow-ups and activity history.`);
+
+        if (!confirmed) return;
+
+        try {
+          await Storage.deletePerson(btn.dataset.id);
+          toast("Person deleted");
+          renderAll();
+        } catch (err) {
+          toast(err.message || "Could not delete person");
+        }
       })
     );
   }

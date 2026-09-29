@@ -178,6 +178,34 @@ const Storage = (() => {
     await loadAll();
   }
 
+
+  async function deletePerson(personId) {
+    // Remove child records first, then the person.
+    const { error: followupError } = await supabase
+      .from("gwe_followups")
+      .delete()
+      .eq("person_id", personId);
+
+    if (followupError) throw followupError;
+
+    const { error: activityError } = await supabase
+      .from("gwe_activities")
+      .delete()
+      .eq("person_id", personId);
+
+    if (activityError) throw activityError;
+
+    const { error: personError } = await supabase
+      .from("gwe_people")
+      .delete()
+      .eq("id", personId);
+
+    if (personError) throw personError;
+
+    await loadAll();
+    return true;
+  }
+
   return {
     client,
     getSession,

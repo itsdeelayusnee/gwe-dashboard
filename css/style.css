@@ -1000,3 +1000,18 @@ body.auth-pending .app-shell {
 #communityFilters .filter-chip {
   flex: 0 0 auto;
 }
+
+
+.delete-person-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-person-btn:hover {
+  text-decoration: underline;
+}
