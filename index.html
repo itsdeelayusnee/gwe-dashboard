@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f2e8" />
+  <title>Gold with Elleanor</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Gold with Elleanor</p>
+        <h1 id="pageTitle">Mission</h1>
+      </div>
+      <button class="icon-btn" id="openAddPerson" aria-label="Add person">＋</button>
+    </header>
+
+    <main class="content">
+      <section id="missionPage" class="page active">
+        <div class="hero-card">
+          <p class="eyebrow light">MY MISSION</p>
+          <h2>Helping 1,000 people start saving in gold.</h2>
+          <div class="mission-number">
+            <strong id="missionCount">0</strong><span>/ 1,000</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="missionProgress"></div>
+          </div>
+          <p class="progress-label" id="missionPercent">0% completed</p>
+        </div>
+
+        <div class="section-heading">
+          <h3>This month</h3>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>New enquiries</span>
+            <strong id="statNew">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Education completed</span>
+            <strong id="statEducation">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Started saving</span>
+            <strong id="statSaving">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Follow ups due</span>
+            <strong id="statFollowups">0</strong>
+          </div>
+        </div>
+
+        <div class="section-heading row-between">
+          <h3>Recent activity</h3>
+        </div>
+        <div id="recentActivity" class="stack"></div>
+      </section>
+
+      <section id="peoplePage" class="page">
+        <div class="search-wrap">
+          <input id="peopleSearch" class="search-input" placeholder="Search people" />
+        </div>
+        <div class="filter-scroll" id="peopleFilters">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="new_enquiry">New</button>
+          <button class="filter-chip" data-filter="registration_pending">Registration</button>
+          <button class="filter-chip" data-filter="purchase_pending">Purchase</button>
+          <button class="filter-chip" data-filter="started_saving">Started</button>
+          <button class="filter-chip" data-filter="no_response">No response</button>
+        </div>
+        <div id="peopleList" class="stack"></div>
+      </section>
+
+      <section id="followupsPage" class="page">
+        <div class="filter-scroll" id="followupFilters">
+          <button class="filter-chip active" data-filter="due">Due</button>
+          <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+          <button class="filter-chip" data-filter="completed">Completed</button>
+        </div>
+        <div class="section-heading">
+          <h3>Registration follow ups</h3>
+        </div>
+        <div id="registrationFollowups" class="stack"></div>
+
+        <div class="section-heading top-gap">
+          <h3>First purchase follow ups</h3>
+        </div>
+        <div id="purchaseFollowups" class="stack"></div>
+      </section>
+
+      <section id="communityPage" class="page">
+        <div class="community-banner">
+          <p class="eyebrow">GOLD SAVER COMMUNITY</p>
+          <strong id="communityCount">0</strong>
+          <span>people helped</span>
+        </div>
+        <div class="search-wrap">
+          <input id="communitySearch" class="search-input" placeholder="Search community" />
+        </div>
+        <div id="communityList" class="stack"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-page="missionPage" data-title="Mission">
+        <span>⌂</span><small>Mission</small>
+      </button>
+      <button class="nav-item" data-page="peoplePage" data-title="People">
+        <span>♙</span><small>People</small>
+      </button>
+      <button class="nav-item" data-page="followupsPage" data-title="Follow Ups">
+        <span>◴</span><small>Follow Ups</small>
+      </button>
+      <button class="nav-item" data-page="communityPage" data-title="Community">
+        <span>✦</span><small>Community</small>
+      </button>
+    </nav>
+  </div>
+
+  <div class="modal" id="personModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">NEW ENQUIRY</p>
+          <h2>Add person</h2>
+        </div>
+        <button class="icon-btn ghost" data-close-modal>×</button>
+      </div>
+      <form id="personForm">
+        <label>Name *</label>
+        <input name="name" required />
+
+        <label>Contact</label>
+        <input name="phone" inputmode="tel" />
+
+        <label>Source *</label>
+        <select name="source" required>
+          <option value="">Select source</option>
+          <option>TikTok</option>
+          <option>Instagram</option>
+          <option>Threads</option>
+          <option>WhatsApp</option>
+          <option>Referral</option>
+          <option>Event</option>
+          <option>Other</option>
+        </select>
+
+        <label>Notes</label>
+        <textarea name="notes" rows="4"></textarea>
+
+        <button class="primary-btn" type="submit">Save enquiry</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="profileModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-profile></div>
+    <div class="modal-card profile-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">PERSON PROFILE</p>
+          <h2 id="profileName">Person</h2>
+          <p class="muted" id="profileMeta"></p>
+        </div>
+        <button class="icon-btn ghost" data-close-profile>×</button>
+      </div>
+
+      <div id="profileJourney" class="journey"></div>
+
+      <div class="profile-notes">
+        <p class="eyebrow">NOTES</p>
+        <p id="profileNotes" class="muted">No notes yet.</p>
+      </div>
+
+      <div id="profileActions" class="action-stack"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
