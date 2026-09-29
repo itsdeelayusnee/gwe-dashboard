@@ -138,9 +138,15 @@ const App = (() => {
     ).length;
 
     $("#statNew").textContent = countActivity("new_enquiry");
-    $("#statEducation").textContent = countActivity("education_completed");
-    $("#statRegistered").textContent = countPeopleDate("registration_date");
-    $("#statSaving").textContent = countActivity("started_saving");
+    $("#statEducation").textContent = countPeopleDate("registration_date");
+
+    const newSavers2026 = people.filter(p =>
+      monthKeyFromDate(p.registration_date).startsWith("2026-") &&
+      monthKeyFromDate(p.last_purchase_date).startsWith("2026-")
+    ).length;
+
+    $("#statRegistered").textContent = newSavers2026;
+    $("#statSaving").textContent = countPeopleDate("last_purchase_date");
 
     const months = Array.from({ length: 12 }, (_, i) => {
       const key = `2026-${String(i + 1).padStart(2, "0")}`;

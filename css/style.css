@@ -1231,3 +1231,65 @@ body.auth-pending .app-shell {
     gap: 1px;
   }
 }
+
+
+/* Compact monthly snapshot */
+.compact-snapshot-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.compact-snapshot-card {
+  min-height: 0 !important;
+  padding: 12px 14px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compact-snapshot-card p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.compact-snapshot-card strong {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.mission-chart-panel {
+  padding: 13px 14px;
+}
+
+.history-chart {
+  height: 155px;
+}
+
+.history-month {
+  grid-template-rows: 18px 1fr 20px;
+}
+
+.history-legend {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 720px) {
+  .compact-snapshot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compact-snapshot-card {
+    padding: 11px 12px !important;
+  }
+
+  .compact-snapshot-card strong {
+    font-size: 22px;
+  }
+
+  .history-chart {
+    height: 145px;
+  }
+}
