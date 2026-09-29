@@ -142,8 +142,12 @@ const App = (() => {
 
     // Selected-month metrics
     $("#statNew").textContent = countActivity("new_enquiry");
-    $("#statEducation").textContent = countPeopleDate("registration_date");
-    $("#statSaving").textContent = countPeopleDate("last_purchase_date");
+
+    const waitingToStart = people.filter(p =>
+      p.status === "purchase_pending"
+    ).length;
+
+    $("#statWaiting").textContent = waitingToStart;
 
     // Full FY metric: registered during FY 2026/27 + a purchase recorded during the same FY.
     const newSaversFY = people.filter(p =>

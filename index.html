@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5eee3" />
   <title>Gold with Elleanor</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css?v=20260929-1145" />
+  <link rel="stylesheet" href="css/style.css?v=20260929-1245" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -88,22 +88,18 @@
             <select id="snapshotMonth" class="snapshot-month-select" aria-label="Snapshot month"></select>
           </div>
 
-          <div class="metric-grid compact-snapshot-grid">
+          <div class="metric-grid compact-snapshot-grid compact-snapshot-grid-3">
             <article class="metric-card compact-snapshot-card">
               <p>New Enquiries</p>
               <strong id="statNew">0</strong>
             </article>
             <article class="metric-card compact-snapshot-card">
-              <p>Registered</p>
-              <strong id="statEducation">0</strong>
+              <p>Waiting to Start</p>
+              <strong id="statWaiting">0</strong>
             </article>
             <article class="metric-card compact-snapshot-card">
-              <p>New Savers FY</p>
+              <p>New Savers</p>
               <strong id="statRegistered">0</strong>
-            </article>
-            <article class="metric-card compact-snapshot-card">
-              <p>Last Purchase</p>
-              <strong id="statSaving">0</strong>
             </article>
           </div>
 
@@ -414,7 +410,7 @@
   </script>
   <script src="js/config.js?v=20260929-1035"></script>
   <script src="js/storage.js?v=20260929-1140"></script>
-  <script src="js/app.js?v=20260929-1145"></script>
+  <script src="js/app.js?v=20260929-1245"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const heroBtn = document.getElementById("openAddPersonHero");
