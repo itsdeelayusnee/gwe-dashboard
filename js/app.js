@@ -100,33 +100,36 @@ const App = (() => {
     });
   }
 
-  function lastMonthKeys(count = 12) {
-    const out = [];
-    const now = new Date();
-    for (let i = count - 1; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    }
-    return out;
+  function fy2026MonthKeys() {
+    return [
+      "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09",
+      "2026-10", "2026-11", "2026-12", "2027-01", "2027-02", "2027-03"
+    ];
+  }
+
+  function isInFY2026(dateValue) {
+    const key = monthKeyFromDate(dateValue);
+    return key >= "2026-04" && key <= "2027-03";
   }
 
   function ensureSnapshotMonthOptions() {
     const select = $("#snapshotMonth");
     if (!select || select.options.length) return;
 
-    const keys = lastMonthKeys(12).slice().reverse();
+    const keys = fy2026MonthKeys();
     select.innerHTML = keys.map(key =>
       `<option value="${key}">${escapeHtml(monthLabel(key))}</option>`
     ).join("");
 
-    select.value = new Date().toISOString().slice(0, 7);
+    const currentKey = new Date().toISOString().slice(0, 7);
+    select.value = keys.includes(currentKey) ? currentKey : keys[0];
   }
 
   function renderMonthlySnapshot() {
     const { people, activities } = Storage.getData();
     ensureSnapshotMonthOptions();
 
-    const selectedMonth = $("#snapshotMonth")?.value || new Date().toISOString().slice(0, 7);
+    const selectedMonth = $("#snapshotMonth")?.value || "2026-04";
 
     const countActivity = type => activities.filter(a =>
       a.activity_type === type &&
@@ -137,29 +140,39 @@ const App = (() => {
       monthKeyFromDate(p[field]) === selectedMonth
     ).length;
 
+    // Selected-month metrics
     $("#statNew").textContent = countActivity("new_enquiry");
     $("#statEducation").textContent = countPeopleDate("registration_date");
-
-    const newSavers2026 = people.filter(p =>
-      monthKeyFromDate(p.registration_date).startsWith("2026-") &&
-      monthKeyFromDate(p.last_purchase_date).startsWith("2026-")
-    ).length;
-
-    $("#statRegistered").textContent = newSavers2026;
     $("#statSaving").textContent = countPeopleDate("last_purchase_date");
 
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const key = `2026-${String(i + 1).padStart(2, "0")}`;
-      const registered = people.filter(p => monthKeyFromDate(p.registration_date) === key).length;
-      const lastPurchase = people.filter(p => monthKeyFromDate(p.last_purchase_date) === key).length;
+    // Full FY metric: registered during FY 2026/27 + a purchase recorded during the same FY.
+    const newSaversFY = people.filter(p =>
+      isInFY2026(p.registration_date) &&
+      isInFY2026(p.last_purchase_date)
+    ).length;
+
+    $("#statRegistered").textContent = newSaversFY;
+
+    // FY chart in Apr → Mar order.
+    const months = fy2026MonthKeys().map(key => {
+      const registered = people.filter(p =>
+        monthKeyFromDate(p.registration_date) === key
+      ).length;
+
+      const lastPurchase = people.filter(p =>
+        monthKeyFromDate(p.last_purchase_date) === key
+      ).length;
+
       const startedSaving = activities.filter(a =>
         a.activity_type === "started_saving" &&
         monthKeyFromDate(a.activity_date) === key
       ).length;
 
+      const [year, month] = key.split("-").map(Number);
+
       return {
         key,
-        label: new Date(2026, i, 1).toLocaleDateString(undefined, { month: "short" }),
+        label: new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: "short" }),
         registered,
         lastPurchase,
         startedSaving
