@@ -716,7 +716,8 @@ const recent = activities.slice(0, 6);
 
     $("#personForm").addEventListener("submit", async e => {
       e.preventDefault();
-      const fd = new FormData(e.currentTarget);
+      const form = e.currentTarget;
+      const fd = new FormData(form);
 
       try {
         const record = await Storage.addPerson({
@@ -726,7 +727,7 @@ const recent = activities.slice(0, 6);
           notes: fd.get("notes")
         });
         await Storage.addActivity(record.id, "new_enquiry", "New enquiry added");
-        e.currentTarget.reset();
+        form.reset();
         $("#personModal").classList.remove("show");
         toast("Enquiry added");
         renderAll();
@@ -737,7 +738,8 @@ const recent = activities.slice(0, 6);
 
     $("#existingSaverForm").addEventListener("submit", async e => {
       e.preventDefault();
-      const fd = new FormData(e.currentTarget);
+      const form = e.currentTarget;
+      const fd = new FormData(form);
 
       try {
         const record = await Storage.addPerson({
@@ -759,7 +761,7 @@ const recent = activities.slice(0, 6);
           fd.get("started_saving_date") || localDate()
         );
 
-        e.currentTarget.reset();
+        form.reset();
         $("#existingSaverModal").classList.remove("show");
         toast("Existing saver added • Mission +1");
         renderAll();
