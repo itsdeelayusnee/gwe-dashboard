@@ -378,14 +378,19 @@ const recent = activities.slice(0, 6);
         const personName = btn.dataset.name || "this person";
         const confirmed = window.confirm(`Delete ${personName}? This will also remove their follow-ups and activity history.`);
 
-        if (!confirmed) return;
+        if (!confirmed || btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = "Deleting…";
 
         try {
-          await Storage.deletePerson(btn.dataset.id);
-          toast("Person deleted");
+          const result = await Storage.deletePerson(btn.dataset.id);
+          toast(result.warning || "Person deleted");
           renderAll();
         } catch (err) {
           toast(err.message || "Could not delete person");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Delete";
         }
       })
     );
@@ -717,6 +722,10 @@ const recent = activities.slice(0, 6);
     $("#personForm").addEventListener("submit", async e => {
       e.preventDefault();
       const form = e.currentTarget;
+      if (form.dataset.saving === "true") return;
+      form.dataset.saving = "true";
+      const saveButton = form.querySelector("button[type=submit]");
+      if (saveButton) saveButton.disabled = true;
       const fd = new FormData(form);
 
       try {
@@ -726,19 +735,25 @@ const recent = activities.slice(0, 6);
           source: fd.get("source"),
           notes: fd.get("notes")
         });
-        await Storage.addActivity(record.id, "new_enquiry", "New enquiry added");
         form.reset();
         $("#personModal").classList.remove("show");
-        toast("Enquiry added");
+        toast(record.saveWarning || "Enquiry added");
         renderAll();
       } catch (err) {
         toast(err.message || "Could not add enquiry");
+      } finally {
+        form.dataset.saving = "false";
+        if (saveButton) saveButton.disabled = false;
       }
     });
 
     $("#existingSaverForm").addEventListener("submit", async e => {
       e.preventDefault();
       const form = e.currentTarget;
+      if (form.dataset.saving === "true") return;
+      form.dataset.saving = "true";
+      const saveButton = form.querySelector("button[type=submit]");
+      if (saveButton) saveButton.disabled = true;
       const fd = new FormData(form);
 
       try {
@@ -746,27 +761,20 @@ const recent = activities.slice(0, 6);
           name: fd.get("name"),
           phone: fd.get("phone"),
           source: fd.get("source") || "Existing Frontline",
+          status: "started_saving",
+          started_saving_date: fd.get("started_saving_date") || localDate(),
           notes: fd.get("notes")
         });
 
-        await Storage.updatePerson(record.id, {
-          status: "started_saving",
-          started_saving_date: fd.get("started_saving_date") || localDate()
-        });
-
-        await Storage.addActivity(
-          record.id,
-          "started_saving",
-          "Existing saver added to Gold Saver Community",
-          fd.get("started_saving_date") || localDate()
-        );
-
         form.reset();
         $("#existingSaverModal").classList.remove("show");
-        toast("Existing saver added • Mission +1");
+        toast(record.saveWarning || "Existing saver added • Mission +1");
         renderAll();
       } catch (err) {
         toast(err.message || "Could not add existing saver");
+      } finally {
+        form.dataset.saving = "false";
+        if (saveButton) saveButton.disabled = false;
       }
     });
 
