@@ -49,6 +49,7 @@ const App = (() => {
   function activityLabel(type, personName) {
     const map = {
       enquiry_added: `${personName} enquiry received`,
+      new_enquiry: `${personName} enquiry received`,
       education_completed: `${personName} education completed`,
       registered: `${personName} registered`,
       started_saving: `${personName} started saving gold`,
@@ -87,6 +88,10 @@ const App = (() => {
       .replaceAll("'","&#039;");
   }
 
+
+  function isEnquiryActivity(activity) {
+    return ["enquiry_added", "new_enquiry"].includes(activity.activity_type);
+  }
 
   function monthKeyFromDate(value) {
     return value ? String(value).slice(0, 7) : "";
@@ -131,55 +136,45 @@ const App = (() => {
 
     const selectedMonth = $("#snapshotMonth")?.value || "2026-04";
 
-    const countActivity = type => activities.filter(a =>
-      a.activity_type === type &&
-      monthKeyFromDate(a.activity_date) === selectedMonth
-    ).length;
+    // A saver belongs to their first-saving month, never registration or
+    // latest-purchase month. Older records may have a dated start activity.
+    const startMonths = new Map(people.map(person => {
+      const startActivities = activities.filter(a =>
+        a.person_id === person.id && a.activity_type === "started_saving" && a.activity_date
+      ).map(a => String(a.activity_date)).sort();
+      return [person.id, monthKeyFromDate(person.started_saving_date || startActivities[0])];
+    }));
 
-    // Snapshot cards
-    $("#statNew").textContent = countActivity("new_enquiry");
-
-    const waitingToStart = people.filter(p =>
-      p.status === "purchase_pending"
-    ).length;
-    $("#statWaiting").textContent = waitingToStart;
-
-    const newSaversFY = people.filter(p =>
-      isInFY2026(p.registration_date) &&
-      isInFY2026(p.last_purchase_date)
-    ).length;
-    $("#statRegistered").textContent = newSaversFY;
-
-    // Monthly movement:
-    // - New Enquiries = enquiry activity recorded that month
-    // - Waiting to Start = people registered that month and currently purchase_pending
-    // - New Savers = people registered that month who have a purchase recorded in the FY
     const months = fy2026MonthKeys().map(key => {
-      const newEnquiries = activities.filter(a =>
-        a.activity_type === "new_enquiry" &&
-        monthKeyFromDate(a.activity_date) === key
-      ).length;
-
+      const enquiryIds = new Set(activities.filter(a =>
+        isEnquiryActivity(a) && monthKeyFromDate(a.activity_date) === key
+      ).map(a => a.person_id).filter(Boolean));
+      const newEnquiries = people.filter(p => enquiryIds.has(p.id)).length;
       const waiting = people.filter(p =>
-        monthKeyFromDate(p.registration_date) === key &&
-        p.status === "purchase_pending"
+        monthKeyFromDate(p.registration_date) === key && p.status === "purchase_pending"
       ).length;
-
-      const newSavers = people.filter(p =>
-        monthKeyFromDate(p.registration_date) === key &&
-        isInFY2026(p.last_purchase_date)
-      ).length;
-
+      const newSavers = people.filter(p => startMonths.get(p.id) === key).length;
       const [year, month] = key.split("-").map(Number);
-
       return {
         key,
         label: new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: "short" }),
-        newEnquiries,
-        waiting,
-        newSavers
+        newEnquiries, waiting, newSavers
       };
     });
+    // Cards and chart use exactly the same monthly values.
+    const selected = months.find(m => m.key === selectedMonth);
+    $("#statNew").textContent = selected?.newEnquiries || 0;
+    $("#statWaiting").textContent = selected?.waiting || 0;
+    $("#statRegistered").textContent = selected?.newSavers || 0;
+    const missingDates = people.filter(p =>
+      p.status === "started_saving" && !startMonths.get(p.id)
+    ).length;
+    const dateNote = $("#monthlyDateNote");
+    if (dateNote) {
+      dateNote.textContent = missingDates
+        ? `${missingDates} saver${missingDates === 1 ? " has" : "s have"} no first-purchase date and cannot be assigned to a month.`
+        : "New Savers are counted by first-purchase date.";
+    }
 
     const maxTotal = Math.max(
       1,
@@ -229,7 +224,7 @@ const App = (() => {
     const activityPersonIds = new Set(
       activities
         .filter(a =>
-          a.activity_type === "new_enquiry" &&
+          isEnquiryActivity(a) &&
           monthKeyFromDate(a.activity_date) >= fyStart &&
           monthKeyFromDate(a.activity_date) <= fyEnd
         )
@@ -237,15 +232,11 @@ const App = (() => {
         .filter(Boolean)
     );
 
-    let leadPeople = people.filter(p => activityPersonIds.has(p.id));
-
-    if (!leadPeople.length) {
-      leadPeople = people.filter(p =>
-        p.status === "new_enquiry" &&
-        monthKeyFromDate(p.date_added) >= fyStart &&
-        monthKeyFromDate(p.date_added) <= fyEnd
-      );
-    }
+    const leadPeople = people.filter(p => activityPersonIds.has(p.id) || (
+      p.status === "new_enquiry" &&
+      monthKeyFromDate(p.date_added) >= fyStart &&
+      monthKeyFromDate(p.date_added) <= fyEnd
+    ));
 
     const orderedSources = ["TikTok", "Instagram", "Threads", "Referral", "WhatsApp", "Other"];
     const counts = Object.fromEntries(orderedSources.map(s => [s, 0]));
@@ -318,7 +309,18 @@ const App = (() => {
 
     renderMonthlySnapshot();
 
-const recent = activities.slice(0, 6);
+    const seenEnquiries = new Set();
+    const recent = [...activities]
+      .filter(a => people.some(p => p.id === a.person_id))
+      .sort((a, b) => String(b.activity_date || "").localeCompare(String(a.activity_date || "")))
+      .filter(a => {
+        if (!isEnquiryActivity(a)) return true;
+        // Older builds sometimes logged both aliases for the same enquiry.
+        const key = `${a.person_id}:${String(a.activity_date || "").slice(0, 10)}`;
+        if (seenEnquiries.has(key)) return false;
+        seenEnquiries.add(key);
+        return true;
+      }).slice(0, 6);
     $("#recentActivity").innerHTML = recent.length ? recent.map(a => {
       const person = people.find(p => p.id === a.person_id);
       return `<div class="activity-card">
@@ -622,7 +624,7 @@ const recent = activities.slice(0, 6);
             status: "started_saving",
             started_saving_date: date
           });
-          await Storage.addActivity(p.id, "started_saving", "Added to Gold Saver Community");
+          await Storage.addActivity(p.id, "started_saving", "Added to Gold Saver Community", date);
           toast("Mission +1 ✦");
         }
 

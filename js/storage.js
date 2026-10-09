@@ -102,7 +102,7 @@ const Storage = (() => {
       let warning = "";
       try {
         await addActivity(row.id,
-          row.status === "started_saving" ? "started_saving" : "new_enquiry",
+          row.status === "started_saving" ? "started_saving" : "enquiry_added",
           row.status === "started_saving" ? "Existing saver added to Gold Saver Community" : "New enquiry added",
           row.status === "started_saving" ? row.started_saving_date : null);
       } catch (err) {

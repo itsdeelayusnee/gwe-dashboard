@@ -11,3 +11,9 @@ For protection against simultaneous saves from separate tabs/devices, run duplic
 If deletion reports a permission error, inspect the DELETE policies for gwe_people, gwe_followups, and gwe_activities for the signed-in owner (user_id = auth.uid()). This package does not broaden database access.
 
 Validated locally with mocked database tests for deletion, blocked deletion, duplicate detection, simultaneous Save, shared family phone numbers, and successful save followed by history failure. The live Vercel deployment and database have not been changed or tested.
+
+## Monthly progress correction
+The selected month's New Savers card and chart now share one calculation based on started_saving_date, with the earliest dated started_saving activity used only when the date is absent. Registration dates and latest purchase dates are not first-purchase dates. Repeat purchases do not add another new saver. The waiting card is scoped to registrations in the selected month, matching its chart segment. Enquiry activities count each existing person once per month. Savers without a first-purchase date or dated start activity stay in the overall mission total; a visible note explains their exclusion from monthly totals. Enter their actual first-purchase dates rather than guessing from latest purchases.
+
+## Activity and lead-source correction
+Both legacy enquiry_added and new_enquiry activities now use the enquiry label and count in monthly progress and lead sources. Lead-source fallback applies per person, rather than disappearing when any other enquiry has an activity. Recent Activity sorts events newest first, hides orphan records, and collapses the two enquiry aliases when logged for the same person on the same day. New enquiry saves use the existing enquiry_added activity type. No database migration is required for this correction.
